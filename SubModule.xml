@@ -1,0 +1,28 @@
+<Module>
+	<Name value="Battle Regeneration"/>
+	<Id value="BattleRegeneration"/>
+	<Version value="v1.0.0"/>
+	<SingleplayerModule value="true"/>
+	<MultiplayerModule value="false"/>
+	<Official value="false"/>
+	<DependedModules>
+		<DependedModule Id="Native"/>
+		<DependedModule Id="SandBoxCore"/>
+		<DependedModule Id="Sandbox"/>
+		<DependedModule Id="CustomBattle"/>
+		<DependedModule Id="StoryMode"/>
+        	<DependedModule Id="Bannerlord.MBOptionScreen"/>
+	</DependedModules>
+  <SubModules>
+    <SubModule>
+      <Name value="BattleRegen"/>
+      <DLLName value="BattleRegen.dll"/>
+      <SubModuleClassType value="BattleRegen.SubModule"/>
+      <Tags>
+        <Tag key="DedicatedServerType" value="none" />
+        <Tag key="IsNoRenderModeElement" value="false" />
+      </Tags>
+    </SubModule>
+  </SubModules>
+  <Xmls></Xmls>
+</Module>
