@@ -17,9 +17,9 @@ namespace BattleRegen
 
         public override string ModuleFolderName => "D225.BattleRegen";
 
-        [SettingPropertyInteger("Regen Amount", 0, 100, HintText = "How much HP to be regenerated every second. (Regen is applied every second with this mod.)", Order = 0, RequireRestart = false)]
+        [SettingPropertyFloatingInteger("Regen Amount", 0f, 0.5f, HintText = "What fraction of total health to be regenerated every second. (Regen is applied continuously with this mod.)", Order = 0, RequireRestart = false)]
         [SettingPropertyGroup("Regeneration Settings")]
-        public int RegenAmount { get; set; } = 2;
+        public float RegenAmount { get; set; } = 0.02f;
 
         [SettingPropertyBool("Apply To Player", HintText = "Whether the player should receive passive regen.", Order = 1, RequireRestart = false)]
         [SettingPropertyGroup("Regeneration Settings")]
