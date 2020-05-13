@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
@@ -13,20 +15,22 @@ namespace BattleRegen
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly BattleRegenSettings settings;
         private readonly Mission mission;
-        private readonly Dictionary<Agent, double> agentHealthPair;
+        private bool modelErrorDetected;
 
         public BattleRegeneration(Mission mission)
         {
             settings = BattleRegenSettings.Instance;
-            agentHealthPair = new Dictionary<Agent, double>();
             this.mission = mission;
+            modelErrorDetected = false;
 
+            Debug.Print("[BattleRegeneration] Mission started, data initialized");
             if (settings.Debug)
             {
-                Debug.Print("[BattleRegeneration] Dumping settings: "
-                    + string.Format("regen amount in percent total HP: {0}, Regen: player? {1}, ", settings.RegenAmount, settings.ApplyToPlayer)
-                    + string.Format("companions? {0}, allied heroes? {1}, party troops? {2}, ",
-                        settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
+                Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
+                    + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2} ",
+                        settings.RegenAmount, settings.MedicineBoost, settings.RegenModel.SelectedValue)
+                    + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
+                        settings.ApplyToPlayer, settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
                     + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, mounts? {3}",
                         settings.ApplyToAlliedTroops, settings.ApplyToEnemyHeroes, settings.ApplyToEnemyTroops, settings.ApplyToMount));
             }
@@ -40,10 +44,8 @@ namespace BattleRegen
             {
                 try
                 {
-                    if (agent.Health >= agent.HealthLimit) continue;
-
-                    if (CanAgentRegenerate(agent, dt))
-                        Regenerate(agent, dt);
+                    if (agent.Health < agent.HealthLimit)
+                        AttemptRegenerateAgent(agent, dt);
                 }
                 catch (Exception e)
                 {
@@ -53,106 +55,186 @@ namespace BattleRegen
             }
         }
 
-        private bool CanAgentRegenerate(Agent agent, float dt)
+        private void AttemptRegenerateAgent(Agent agent, float dt)
         {
-            if (agent == null) return false;
+            if (agent.IsMount && settings.ApplyToMount) Regenerate(agent, dt, agent.MountAgent?.Team);
+            else if (agent.IsPlayerControlled && settings.ApplyToPlayer) Regenerate(agent, dt);
+            else
+            {
+                Team team = agent.Team;
+                if (team == null)
+                {
+                    if (agent.IsHero && settings.ApplyToEnemyHeroes) Regenerate(agent, dt);
+                    else if (!agent.IsHero && settings.ApplyToEnemyTroops) Regenerate(agent, dt);
+                }
+                else if (team.IsPlayerTeam)
+                {
+                    if (agent.IsHero && settings.ApplyToCompanions) Regenerate(agent, dt, team);
+                    else if (!agent.IsHero && settings.ApplyToPartyTroops) Regenerate(agent, dt, team);
+                }
+                else if (team.IsPlayerAlly)
+                {
+                    if (agent.IsHero && settings.ApplyToAlliedHeroes) Regenerate(agent, dt, team);
+                    else if (!agent.IsHero && settings.ApplyToAlliedTroops) Regenerate(agent, dt, team);
+                }
+                else
+                {
+                    if (agent.IsHero && settings.ApplyToEnemyHeroes) Regenerate(agent, dt, team);
+                    else if (!agent.IsHero && settings.ApplyToEnemyTroops) Regenerate(agent, dt, team);
+                }
+            }
+        }
 
-            Team playerTeam = mission.PlayerTeam;
-            Team allyTeam = mission.PlayerAllyTeam;
+        private void Regenerate(Agent agent, float dt, Team agentTeam = null)
+        {
+            if (agentTeam == null) agentTeam = agent.Team;
 
-            if (agent.IsMount && settings.ApplyToMount)
+            if (agent.Health > 0f && agent.Health < agent.HealthLimit)
             {
+                double modifier = GetHealthModifier(agent, agentTeam);
+                double baseRegenRate = settings.RegenAmount / 100.0 * agent.HealthLimit;
+                double regenRate = ApplyRegenModel(agent, baseRegenRate, modifier);
+                double regenAmount = regenRate * dt;
+
+                if (agent.Health + regenAmount >= agent.HealthLimit)
+                    agent.Health = agent.HealthLimit;
+                else
+                    agent.Health += (float)regenAmount;
+
                 if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to mount agent {2} (current HP: {3}, dt: {4})",
-                        settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                return true;
+                    Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} health: {2}, health added: {3} (base: {4}, multiplier: {5}), dt: {6}",
+                        GetTroopType(agent, agentTeam), agent.Name, agent.Health, regenAmount, baseRegenRate * dt, modifier, dt));
             }
-            else if (agent.IsPlayerControlled && settings.ApplyToPlayer)
+        }
+
+        private double ApplyRegenModel(Agent agent, double baseRegenRate, double modifier)
+        {
+            double regenRate = baseRegenRate * modifier;
+            double regenTime = agent.HealthLimit / regenRate;
+
+            if (settings.RegenModel.SelectedValue == BattleRegenModel.Quadratic)
             {
-                if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to player agent {2} (current HP: {3}, dt: {4})",
-                       settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                return true;
-            }
-            else if (agent.Team == playerTeam)
-            {
-                if (agent.IsHero && settings.ApplyToCompanions)
+                // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d <- Agent.Health
+                double maxRegenRate = 2 * regenRate; // v0
+                double regenChangeRate = -maxRegenRate / regenTime; // a
+                double t1 = 0, t2 = 0; // t
+
+                if (SolveForFactors(regenChangeRate/2.0, maxRegenRate, -agent.Health, ref t1, ref t2))
                 {
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to companion agent {2} (current HP: {3}, dt: {4})",
-                            settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                    return true;
-                }
-                else if (!agent.IsHero && settings.ApplyToPartyTroops)
-                {
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to party troop agent {2} (current HP: {3}, dt: {4})",
-                            settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                    return true;
+                    if (t1 < regenTime)
+                        regenRate = maxRegenRate * (regenTime - t1) / regenTime;
+                    else if (t2 < regenTime)
+                        regenRate = maxRegenRate * (regenTime - t2) / regenTime;
+                    else regenRate = 0;
                 }
             }
-            else if (agent.Team == allyTeam)
+            else if (settings.RegenModel.SelectedValue == BattleRegenModel.EveOnline)
             {
-                if (agent.IsHero && settings.ApplyToAlliedHeroes)
+                double healthToMaxRatio = agent.Health / agent.HealthLimit;
+                regenRate = 10 * regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
+            }
+            else if (settings.RegenModel.SelectedValue != BattleRegenModel.Linear && !modelErrorDetected)
+            {
+                Debug.PrintError("[BattleRegeneration] WARNING: No known model selected! Defaulting to linear model.");
+                modelErrorDetected = true;
+            }
+
+            return regenRate;
+        }
+
+        private bool SolveForFactors(double a, double b, double c, ref double x1, ref double x2)
+        {
+            double discriminant = b * b - 4 * a * c;
+            if (discriminant < 0) return false;
+
+            double sqrtDiscriminant = Math.Sqrt(discriminant);
+            x1 = (-b + sqrtDiscriminant) / (2 * a);
+            x2 = (-b - sqrtDiscriminant) / (2 * a);
+            return true;
+        }
+
+        private double GetHealthModifier(Agent agent, Team agentTeam)
+        {
+            double modifier = 1.0;
+            double percentMedBoost = settings.MedicineBoost / 100.0;
+
+            if (agentTeam != null && agentTeam.GeneralAgent != null)
+            {
+                BasicCharacterObject generalCharacter = agentTeam.GeneralAgent.Character;
+                modifier += generalCharacter.GetSkillValue(DefaultSkills.Medicine) / 100.0 * percentMedBoost;
+                if (generalCharacter.IsHero)
                 {
+                    (generalCharacter as CharacterObject).HeroObject.AddSkillXp(DefaultSkills.Medicine, 0.01f);
                     if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to allied hero agent {2} (current HP: {3}, dt: {4})",
-                            settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                    return true;
+                        Debug.Print(string.Format("[BattleRegeneration] commander agent {0} has received 0.01 xp", generalCharacter.Name));
                 }
-                else if (!agent.IsHero && settings.ApplyToAlliedTroops)
+            }
+
+            if (!agent.IsMount)
+            {
+                modifier += agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
+                if (agent.IsHero)
                 {
+                    (agent.Character as CharacterObject).HeroObject.AddSkillXp(DefaultSkills.Medicine, 0.1f);
                     if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to allied troop agent {2} (current HP: {3}, dt: {4})",
-                            settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                    return true;
+                        Debug.Print(string.Format("[BattleRegeneration] agent {0} has received 0.1 xp", agent.Name));
                 }
+            }
+            else if (agent.MountAgent != null)
+            {
+                modifier += agent.MountAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
+                if (agent.MountAgent.IsHero)
+                {
+                    (agent.MountAgent.Character as CharacterObject).HeroObject.AddSkillXp(DefaultSkills.Medicine, 0.1f);
+                    if (settings.Debug)
+                        Debug.Print(string.Format("[BattleRegeneration] rider agent {0} has received 0.1 xp", agent.MountAgent.Name));
+                }
+            }
+
+            if (settings.Debug)
+                Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} is receiving a {2} multiplier in health regeneration",
+                    GetTroopType(agent, agentTeam), agent.Name, modifier));
+            return modifier;
+        }
+
+        private string GetTroopType(Agent agent, Team agentTeam)
+        {
+            if (agent.IsMount) return "Mount";
+            else if (agent.IsPlayerControlled) return "Player";
+            else if (agentTeam == null)
+            {
+                if (agent.IsHero) return "Independent hero";
+                else return "Independent troop";
+            }
+            else if (agentTeam.IsPlayerTeam)
+            {
+                if (agent.IsHero) return "Companion";
+                else return "Player troop";
+            }
+            else if (agentTeam.IsPlayerAlly)
+            {
+                if (agent.IsHero) return "Allied hero";
+                else return "allied troop";
             }
             else
             {
-                if (agent.IsHero && settings.ApplyToEnemyHeroes)
-                {
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to enemy hero agent {2} (current HP: {3}, dt: {4})",
-                            settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                    return true;
-                }
-                else if (!agent.IsHero && settings.ApplyToEnemyTroops)
-                {
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] Adding {0} HP ({1}% of total) to enemy troop agent {2} (current HP: {3}, dt: {4})",
-                            settings.RegenAmount * dt * agent.HealthLimit, settings.RegenAmount * dt, agent.Name, agent.Health, dt));
-                    return true;
-                }
+                if (agent.IsHero) return "Enemy hero";
+                else return "Enemy troop";
             }
-
-            return false;
-        }
-
-        private void Regenerate(Agent agent, double dt)
-        {
-            if (!agentHealthPair.ContainsKey(agent) || Math.Ceiling(agentHealthPair[agent]) < agent.Health || Math.Ceiling(agentHealthPair[agent]) > agent.Health)
-                agentHealthPair[agent] = agent.Health;
-
-            if (agentHealthPair[agent] > 0f && agentHealthPair[agent] < agent.HealthLimit)
-            {
-                double regenAmount = settings.RegenAmount * dt * agent.HealthLimit;
-                if (agentHealthPair[agent] + regenAmount >= agent.HealthLimit)
-                    agentHealthPair[agent] = agent.HealthLimit;
-                else
-                    agentHealthPair[agent] += regenAmount;
-            }
-
-            agent.Health = (float)agentHealthPair[agent];
-            if (settings.Debug)
-                Debug.Print(string.Format("[BattleRegeneration] Agent {0} expected health: {1}, actual health: {2}", agent.Name, agentHealthPair[agent], agent.Health));
         }
 
         public override void OnMissionRestart()
         {
             base.OnMissionRestart();
-            agentHealthPair.Clear();
+            modelErrorDetected = false;
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }
+
+    }
+    public static class BattleRegenModel
+    {
+        public const string Linear = "Linear",
+            Quadratic = "Quadratic",
+            EveOnline = "EVE Online";
     }
 }
