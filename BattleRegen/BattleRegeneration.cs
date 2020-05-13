@@ -16,19 +16,23 @@ namespace BattleRegen
         private readonly BattleRegenSettings settings;
         private readonly Mission mission;
         private bool modelErrorDetected;
+        private readonly Dictionary<Hero, double> heroXpGainPairs;
 
         public BattleRegeneration(Mission mission)
         {
             settings = BattleRegenSettings.Instance;
             this.mission = mission;
             modelErrorDetected = false;
+            heroXpGainPairs = new Dictionary<Hero, double>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
             if (settings.Debug)
             {
                 Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
-                    + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2} ",
+                    + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2}, ",
                         settings.RegenAmount, settings.MedicineBoost, settings.RegenModel.SelectedValue)
+                    + string.Format("commander medicine boost: {0}, xp gain: {1}, commander xp gain: {2}, ",
+                        settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
                     + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
                         settings.ApplyToPlayer, settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
                     + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, mounts? {3}",
@@ -53,6 +57,19 @@ namespace BattleRegen
                         agent.Name, e), e.StackTrace);
                 }
             }
+        }
+
+        protected override void OnEndMission()
+        {
+            base.OnEndMission();
+
+            foreach (KeyValuePair<Hero, double> heroXpGainPair in heroXpGainPairs)
+            {
+                heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
+                if (settings.Debug)
+                    Debug.Print(string.Format("[BattleRegeneration] hero {0} has received {1} xp from battle", heroXpGainPair.Key.Name, heroXpGainPair.Value));
+            }
+            heroXpGainPairs.Clear();
         }
 
         private void AttemptRegenerateAgent(Agent agent, float dt)
@@ -87,11 +104,12 @@ namespace BattleRegen
 
         private void Regenerate(Agent agent, float dt, Team agentTeam = null)
         {
+
             if (agentTeam == null) agentTeam = agent.Team;
 
             if (agent.Health > 0f && agent.Health < agent.HealthLimit)
             {
-                double modifier = GetHealthModifier(agent, agentTeam);
+                double modifier = GetHealthModifier(agent, agentTeam, out Healer healers);
                 double baseRegenRate = settings.RegenAmount / 100.0 * agent.HealthLimit;
                 double regenRate = ApplyRegenModel(agent, baseRegenRate, modifier);
                 double regenAmount = regenRate * dt;
@@ -101,6 +119,7 @@ namespace BattleRegen
                 else
                     agent.Health += (float)regenAmount;
 
+                GiveXpToHealers(agent, agentTeam, healers, regenAmount);
                 if (settings.Debug)
                     Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} health: {2}, health added: {3} (base: {4}, multiplier: {5}), dt: {6}",
                         GetTroopType(agent, agentTeam), agent.Name, agent.Health, regenAmount, baseRegenRate * dt, modifier, dt));
@@ -117,13 +136,12 @@ namespace BattleRegen
                 // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d <- Agent.Health
                 double maxRegenRate = 2 * regenRate; // v0
                 double regenChangeRate = -maxRegenRate / regenTime; // a
-                double t1 = 0, t2 = 0; // t
 
-                if (SolveForFactors(regenChangeRate/2.0, maxRegenRate, -agent.Health, ref t1, ref t2))
+                if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -agent.Health, out double t1, out double t2)) // t1, t2 - t
                 {
-                    if (t1 < regenTime)
+                    if (t1 >= 0 && t1 < regenTime)
                         regenRate = maxRegenRate * (regenTime - t1) / regenTime;
-                    else if (t2 < regenTime)
+                    else if (t2 >= 0 && t2 < regenTime)
                         regenRate = maxRegenRate * (regenTime - t2) / regenTime;
                     else regenRate = 0;
                 }
@@ -142,8 +160,10 @@ namespace BattleRegen
             return regenRate;
         }
 
-        private bool SolveForFactors(double a, double b, double c, ref double x1, ref double x2)
+        private bool SolveForFactors(double a, double b, double c, out double x1, out double x2)
         {
+            x1 = 0;
+            x2 = 0;
             double discriminant = b * b - 4 * a * c;
             if (discriminant < 0) return false;
 
@@ -153,42 +173,26 @@ namespace BattleRegen
             return true;
         }
 
-        private double GetHealthModifier(Agent agent, Team agentTeam)
+        private double GetHealthModifier(Agent agent, Team agentTeam, out Healer healers)
         {
+            healers = 0;
             double modifier = 1.0;
             double percentMedBoost = settings.MedicineBoost / 100.0;
 
             if (agentTeam != null && agentTeam.GeneralAgent != null)
             {
-                BasicCharacterObject generalCharacter = agentTeam.GeneralAgent.Character;
-                modifier += generalCharacter.GetSkillValue(DefaultSkills.Medicine) / 100.0 * percentMedBoost;
-                if (generalCharacter.IsHero)
-                {
-                    (generalCharacter as CharacterObject).HeroObject.AddSkillXp(DefaultSkills.Medicine, 0.01f);
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] commander agent {0} has received 0.01 xp", generalCharacter.Name));
-                }
+                modifier += agentTeam.GeneralAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * settings.CommanderMedicineBoost / 100.0;
+                healers |= Healer.General;
             }
-
             if (!agent.IsMount)
             {
                 modifier += agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
-                if (agent.IsHero)
-                {
-                    (agent.Character as CharacterObject).HeroObject.AddSkillXp(DefaultSkills.Medicine, 0.1f);
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] agent {0} has received 0.1 xp", agent.Name));
-                }
+                healers |= Healer.Self;
             }
             else if (agent.MountAgent != null)
             {
                 modifier += agent.MountAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
-                if (agent.MountAgent.IsHero)
-                {
-                    (agent.MountAgent.Character as CharacterObject).HeroObject.AddSkillXp(DefaultSkills.Medicine, 0.1f);
-                    if (settings.Debug)
-                        Debug.Print(string.Format("[BattleRegeneration] rider agent {0} has received 0.1 xp", agent.MountAgent.Name));
-                }
+                healers |= Healer.Rider;
             }
 
             if (settings.Debug)
@@ -223,18 +227,69 @@ namespace BattleRegen
             }
         }
 
+        private void GiveXpToHealers(Agent agent, Team agentTeam, Healer healers, double regenAmount)
+        {
+            double xpGain = regenAmount / agent.HealthLimit;
+
+            if ((healers & Healer.General) == Healer.General && agentTeam.GeneralAgent.IsHero)
+            {
+                double cdrXpGain = xpGain * settings.CommanderXpGain;
+                Hero commander = (agentTeam.GeneralAgent.Character as CharacterObject).HeroObject;
+
+                if (!heroXpGainPairs.ContainsKey(commander))
+                    heroXpGainPairs[commander] = 0.0;
+                heroXpGainPairs[commander] += cdrXpGain;
+
+                if (settings.Debug)
+                    Debug.Print(string.Format("[BattleRegeneration] commander agent {0} has received {1} xp", agentTeam.GeneralAgent.Name, cdrXpGain));
+            }
+            if ((healers & Healer.Self) == Healer.Self && agent.IsHero)
+            {
+                double selfXpGain = xpGain * settings.XpGain;
+                Hero hero = (agent.Character as CharacterObject).HeroObject;
+
+                if (!heroXpGainPairs.ContainsKey(hero))
+                    heroXpGainPairs[hero] = 0.0;
+                heroXpGainPairs[hero] += selfXpGain;
+
+                if (settings.Debug)
+                    Debug.Print(string.Format("[BattleRegeneration] agent {0} has received {1} xp", agent.Name, selfXpGain));
+            }
+            if ((healers & Healer.Rider) == Healer.Rider && agent.MountAgent.IsHero)
+            {
+                double riderXpGain = xpGain * settings.XpGain;
+                Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
+
+                if (!heroXpGainPairs.ContainsKey(rider))
+                    heroXpGainPairs[rider] = 0.0;
+                heroXpGainPairs[rider] += riderXpGain;
+
+                if (settings.Debug)
+                    Debug.Print(string.Format("[BattleRegeneration] rider agent {0} has received {1} xp", agent.MountAgent.Name, riderXpGain));
+            }
+        }
+
         public override void OnMissionRestart()
         {
             base.OnMissionRestart();
             modelErrorDetected = false;
+            heroXpGainPairs.Clear();
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }
 
+        public enum Healer
+        {
+            General = 1,
+            Self = 2,
+            Rider = 4
+        }
     }
+
     public static class BattleRegenModel
     {
         public const string Linear = "Linear",
             Quadratic = "Quadratic",
             EveOnline = "EVE Online";
     }
+
 }
