@@ -28,3 +28,4 @@ D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegen
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\obj\Debug\BattleRegen.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\obj\Debug\BattleRegen.pdb
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\TaleWorlds.CampaignSystem.dll
+D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\obj\Debug\BattleRegen.csprojAssemblyReference.cache
