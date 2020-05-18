@@ -104,7 +104,7 @@ namespace BattleRegen
                     }
                     else
                     {
-                        if (!agent.IsHero && settings.ApplyToPartyTroops) Regenerate(agent, dt, team);
+                        if (settings.ApplyToPartyTroops) Regenerate(agent, dt, team);
                     }
                 }
                 else if (team.IsPlayerAlly)
