@@ -30,7 +30,7 @@ namespace BattleRegen
             {
                 Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
                     + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2}, ",
-                        settings.RegenAmount, settings.MedicineBoost, settings.RegenModel.SelectedValue)
+                        settings.RegenAmount, settings.MedicineBoost, Enum.GetName(typeof(BattleRegenModel), settings.RegenModel))
                     + string.Format("commander medicine boost: {0}, xp gain: {1}, commander xp gain: {2}, ",
                         settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
                     + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
@@ -131,7 +131,7 @@ namespace BattleRegen
             double regenRate = baseRegenRate * modifier;
             double regenTime = agent.HealthLimit / regenRate;
 
-            if (settings.RegenModel.SelectedValue == BattleRegenModel.Quadratic)
+            if (settings.RegenModel == (int)BattleRegenModel.Quadratic)
             {
                 // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d <- Agent.Health
                 double maxRegenRate = 2 * regenRate; // v0
@@ -146,12 +146,12 @@ namespace BattleRegen
                     else regenRate = 0;
                 }
             }
-            else if (settings.RegenModel.SelectedValue == BattleRegenModel.EveOnline)
+            else if (settings.RegenModel == (int)BattleRegenModel.EveOnline)
             {
                 double healthToMaxRatio = agent.Health / agent.HealthLimit;
                 regenRate = 10 * regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
             }
-            else if (settings.RegenModel.SelectedValue != BattleRegenModel.Linear && !modelErrorDetected)
+            else if (settings.RegenModel != (int)BattleRegenModel.Linear && !modelErrorDetected)
             {
                 Debug.PrintError("[BattleRegeneration] WARNING: No known model selected! Defaulting to linear model.");
                 modelErrorDetected = true;
@@ -285,11 +285,11 @@ namespace BattleRegen
         }
     }
 
-    public static class BattleRegenModel
+    public enum BattleRegenModel
     {
-        public const string Linear = "Linear",
-            Quadratic = "Quadratic",
-            EveOnline = "EVE Online";
+        Linear = 1,
+        Quadratic = 2,
+        EveOnline = 3
     }
 
 }

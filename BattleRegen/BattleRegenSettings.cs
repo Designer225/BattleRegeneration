@@ -48,16 +48,11 @@ namespace BattleRegen
         //[SettingPropertyGroup("Regeneration Settings")]
         public float CommanderXpGain { get; set; } = 0.1f;
 
-        [SettingPropertyDropdown("Regeneration Model",
-            HintText = "Determines the model used for regenerating health. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear.",
+        [SettingPropertyInteger("Regeneration Model", (int)BattleRegenModel.Linear, (int)BattleRegenModel.EveOnline,
+            HintText = "Determines the model used for regenerating health. 'Linear' is 1, 'Quadratic' is 2, and 'EVE Online' is 3. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear.",
             Order = 5, RequireRestart = false)]
         //[SettingPropertyGroup("Regeneration Settings")]
-        public DefaultDropdown<string> RegenModel { get; set; } = new DefaultDropdown<string>(new string[]
-        {
-            BattleRegenModel.Linear,
-            BattleRegenModel.Quadratic,
-            BattleRegenModel.EveOnline
-        }, 0);
+        public int RegenModel { get; set; } = (int)BattleRegenModel.Linear;
 
         [SettingPropertyBool("Apply To Player",
             HintText = "Whether the player should receive passive regen. Default is true.",
