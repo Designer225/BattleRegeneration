@@ -30,7 +30,7 @@ namespace BattleRegen
             {
                 Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
                     + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2}, ",
-                        settings.RegenAmount, settings.MedicineBoost, Enum.GetName(typeof(BattleRegenModel), settings.RegenModel))
+                        settings.RegenAmount, settings.MedicineBoost, Enum.GetName(typeof(BattleRegenModel), (BattleRegenModel)settings.RegenModel))
                     + string.Format("commander medicine boost: {0}, xp gain: {1}, commander xp gain: {2}, ",
                         settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
                     + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
