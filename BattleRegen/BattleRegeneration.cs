@@ -74,30 +74,60 @@ namespace BattleRegen
 
         private void AttemptRegenerateAgent(Agent agent, float dt)
         {
-            if (agent.IsMount && settings.ApplyToMount) Regenerate(agent, dt, agent.MountAgent?.Team);
-            else if (agent.IsPlayerControlled && settings.ApplyToPlayer) Regenerate(agent, dt);
+            if (agent.IsMount)
+            {
+                if (settings.ApplyToMount) Regenerate(agent, dt, agent.MountAgent?.Team);
+            }
+            else if (agent.IsPlayerControlled)
+            {
+                if (settings.ApplyToPlayer) Regenerate(agent, dt);
+            }
             else
             {
                 Team team = agent.Team;
                 if (team == null)
                 {
-                    if (agent.IsHero && settings.ApplyToEnemyHeroes) Regenerate(agent, dt);
-                    else if (!agent.IsHero && settings.ApplyToEnemyTroops) Regenerate(agent, dt);
+                    if (agent.IsHero)
+                    {
+                        if (settings.ApplyToEnemyHeroes) Regenerate(agent, dt);
+                    }
+                    else
+                    {
+                        if (settings.ApplyToEnemyTroops) Regenerate(agent, dt);
+                    }
                 }
                 else if (team.IsPlayerTeam)
                 {
-                    if (agent.IsHero && settings.ApplyToCompanions) Regenerate(agent, dt, team);
-                    else if (!agent.IsHero && settings.ApplyToPartyTroops) Regenerate(agent, dt, team);
+                    if (agent.IsHero)
+                    {
+                        if (settings.ApplyToCompanions) Regenerate(agent, dt, team);
+                    }
+                    else
+                    {
+                        if (!agent.IsHero && settings.ApplyToPartyTroops) Regenerate(agent, dt, team);
+                    }
                 }
                 else if (team.IsPlayerAlly)
                 {
-                    if (agent.IsHero && settings.ApplyToAlliedHeroes) Regenerate(agent, dt, team);
-                    else if (!agent.IsHero && settings.ApplyToAlliedTroops) Regenerate(agent, dt, team);
+                    if (agent.IsHero)
+                    {
+                        if (settings.ApplyToAlliedHeroes) Regenerate(agent, dt, team);
+                    }
+                    else
+                    {
+                        if (settings.ApplyToAlliedTroops) Regenerate(agent, dt, team);
+                    }
                 }
                 else
                 {
-                    if (agent.IsHero && settings.ApplyToEnemyHeroes) Regenerate(agent, dt, team);
-                    else if (!agent.IsHero && settings.ApplyToEnemyTroops) Regenerate(agent, dt, team);
+                    if (agent.IsHero)
+                    {
+                        if (settings.ApplyToEnemyHeroes) Regenerate(agent, dt, team);
+                    }
+                    else
+                    {
+                        if (settings.ApplyToEnemyTroops) Regenerate(agent, dt, team);
+                    }
                 }
             }
         }
