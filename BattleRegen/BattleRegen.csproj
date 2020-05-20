@@ -75,6 +75,7 @@
   <ItemGroup>
     <Compile Include="BattleRegeneration.cs" />
     <Compile Include="BattleRegenSettings.cs" />
+    <Compile Include="BattleRegenSettings.Localisation.cs" />
     <Compile Include="SubModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

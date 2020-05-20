@@ -26,18 +26,15 @@ namespace BattleRegen
             heroXpGainPairs = new Dictionary<Hero, double>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
-            if (settings.Debug)
-            {
-                Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
-                    + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2}, ",
-                        settings.RegenAmount, settings.MedicineBoost, Enum.GetName(typeof(BattleRegenModel), (BattleRegenModel)settings.RegenModel))
-                    + string.Format("commander medicine boost: {0}, xp gain: {1}, commander xp gain: {2}, ",
-                        settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
-                    + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
-                        settings.ApplyToPlayer, settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
-                    + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, mounts? {3}",
-                        settings.ApplyToAlliedTroops, settings.ApplyToEnemyHeroes, settings.ApplyToEnemyTroops, settings.ApplyToMount));
-            }
+            Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
+                + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2}, ",
+                    settings.RegenAmount, settings.MedicineBoost, settings.RegenModel)
+                + string.Format("commander medicine boost: {0}, xp gain: {1}, commander xp gain: {2}, ",
+                    settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
+                + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
+                    settings.ApplyToPlayer, settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
+                + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, mounts? {3}",
+                    settings.ApplyToAlliedTroops, settings.ApplyToEnemyHeroes, settings.ApplyToEnemyTroops, settings.ApplyToMount));
         }
 
         public override void OnMissionTick(float dt)
@@ -161,7 +158,7 @@ namespace BattleRegen
             double regenRate = baseRegenRate * modifier;
             double regenTime = agent.HealthLimit / regenRate;
 
-            if (settings.RegenModel == (int)BattleRegenModel.Quadratic)
+            if (settings.RegenModel == BattleRegenModel.Quadratic)
             {
                 // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d <- Agent.Health
                 double maxRegenRate = 2 * regenRate; // v0
@@ -176,12 +173,12 @@ namespace BattleRegen
                     else regenRate = 0;
                 }
             }
-            else if (settings.RegenModel == (int)BattleRegenModel.EveOnline)
+            else if (settings.RegenModel == BattleRegenModel.EveOnline)
             {
                 double healthToMaxRatio = agent.Health / agent.HealthLimit;
                 regenRate = 10 * regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
             }
-            else if (settings.RegenModel != (int)BattleRegenModel.Linear && !modelErrorDetected)
+            else if (settings.RegenModel != BattleRegenModel.Linear && !modelErrorDetected)
             {
                 Debug.PrintError("[BattleRegeneration] WARNING: No known model selected! Defaulting to linear model.");
                 modelErrorDetected = true;

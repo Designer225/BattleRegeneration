@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
+  <tags>
+    <tag language="English"/>
+  </tags>
+  <strings>
+    <string id="BattleRegen_ModNameText" text="Battle Regeneration"/>
+    
+    <string id="BattleRegen_RegenValuesName" text="Regeneration Values"/>
+    <string id="BattleRegen_RegenAmountName" text="Regen Amount (Percents) Per Second"/>
+    <string id="BattleRegen_RegenAmountHint" text="What percent of total health to be regenerated every second. (Regen is applied continuously with this mod.) Default is 1%."/>
+    <string id="BattleRegen_MedicineBoostName" text="Medicine Boost (Percents)"/>
+    <string id="BattleRegen_MedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a human agent's medicine skill. Riders affect regen for their mounts at standard efficiency. Bonuses stack additively. Default is 50%."/>
+    <string id="BattleRegen_CommanderMedicineBoostName" text="Medicine Boost (Percents) For Commanders"/>
+    <string id="BattleRegen_CommanderMedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a commander's medicine skills. Bonuses stack additively. Default is 25%."/>
+    <string id="BattleRegen_XpGainName" text="XP Gain Per Full Health"/>
+    <string id="BattleRegen_XpGainHint" text="How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 1."/>
+    <string id="BattleRegen_CommanderXpGainName" text="XP Gain Per Full Health For Commanders"/>
+    <string id="BattleRegen_CommanderXpGainHint" text="How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.1."/>
+
+    <string id="BattleRegen_RegenSettingsName" text="Regeneration Settings"/>
+    <string id="BattleRegen_RegenModelDropdownName" text="Regeneration Model"/>
+    <string id="BattleRegen_RegenModelDropdownHint" text="Determines the model used for regenerating health. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear."/>
+    <string id="BattleRegen_ApplyToPlayerName" text="Apply To Player"/>
+    <string id="BattleRegen_ApplyToPlayerHint" text="Whether the player should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToCompanionsName" text="Apply To Companions"/>
+    <string id="BattleRegen_ApplyToCompanionsHint" text="Whether the player's companions should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToAlliedHeroesName" text="Apply To Allied Heroes"/>
+    <string id="BattleRegen_ApplyToAlliedHeroesHint" text="Whether the player's allied heroes should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToPartyTroopsName" text="Apply To Party Troops"/>
+    <string id="BattleRegen_ApplyToPartyTroopsHint" text="Whether the player's troops should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToAlliedTroopsName" text="Apply To Allied Troops"/>
+    <string id="BattleRegen_ApplyToAlliedTroopsHint" text="Whether the player's allied troops should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToEnemyHeroesName" text="Apply To Enemy Heroes"/>
+    <string id="BattleRegen_ApplyToEnemyHeroesHint" text="Whether the player's enemy heroes should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToEnemyTroopsName" text="Apply To Enemy Troops"/>
+    <string id="BattleRegen_ApplyToEnemyTroopsHint" text="Whether the player's enemy troops should receive passive regen. Default is true."/>
+    <string id="BattleRegen_ApplyToMountName" text="Apply To Mounts"/>
+    <string id="BattleRegen_ApplyToMountHint" text="Whether mounts should receive passive regen. Mounts regenerate regardless of their rider's allegiance. Default is true."/>
+    <string id="BattleRegen_DebugName" text="Debug Mode"/>
+    <string id="BattleRegen_DebugHint" text="Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false."/>
+
+    <string id="BattleRegen_UseSliderForRegenModelName" text="Use Slider for Regen Model"/>
+    <string id="BattleRegen_UseSliderForRegenModelHint" text="Should the mod use a slider for regen instead of dropdown options."/>
+    <string id="BattleRegen_SliderRegenModelName" text="Regeneration Model"/>
+    <string id="BattleRegen_SliderRegenModelHint" text="Determines the model used for regenerating health. 'Linear' is 1, 'Quadratic' is 2, and 'EVE Online' is 3. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear."/>
+  </strings>
+</base>
