@@ -4,6 +4,8 @@
     <tag language="English"/>
   </tags>
   <strings>
+    <string id="BattleRegen_ModNameText" text="Battle Regeneration"/>
+    
     <string id="BattleRegen_RegenValuesName" text="Regeneration Values"/>
     <string id="BattleRegen_RegenAmountName" text="Regen Amount (Percents) Per Second"/>
     <string id="BattleRegen_RegenAmountHint" text="What percent of total health to be regenerated every second. (Regen is applied continuously with this mod.) Default is 1%."/>

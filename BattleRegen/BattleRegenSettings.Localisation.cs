@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaleWorlds.Localization;
 
 namespace BattleRegen
 {
     public partial class BattleRegenSettings
     {
-        internal const string ModNameText   = "Battle Regeneration",
+        internal const string ModNameText   = "{=BattleRegen_ModNameText}Battle Regeneration",
 
             RegenValuesName                 = "{=BattleRegen_RegenValuesName}Regeneration Values",
             RegenAmountName                 = "{=BattleRegen_RegenAmountName}Regen Amount (Percents) Per Second",
@@ -48,5 +49,7 @@ namespace BattleRegen
             UseSliderForRegenModelHint      = "{=BattleRegen_UseSliderForRegenModelHint}Should the mod use a slider for regen instead of dropdown options.",
             SliderRegenModelName            = "{=BattleRegen_SliderRegenModelName}Regeneration Model",
             SliderRegenModelHint            = "{=BattleRegen_SliderRegenModelHint}Determines the model used for regenerating health. 'Linear' is 1, 'Quadratic' is 2, and 'EVE Online' is 3. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear.";
+
+        private static readonly TextObject ModNameTextObject = new TextObject(ModNameText);
     }
 }

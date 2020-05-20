@@ -9,7 +9,7 @@ namespace BattleRegen
     {
         public override string Id { get; set; } = "D225.BattleRegen";
 
-        public override string ModName => ModNameText;
+        public override string ModName => ModNameTextObject.ToString();
 
         public override string ModuleFolderName => "D225.BattleRegen";
 
