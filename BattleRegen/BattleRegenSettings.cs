@@ -1,21 +1,21 @@
-﻿using MBOptionScreen.Attributes;
-using MBOptionScreen.Attributes.v2;
-using MBOptionScreen.Data;
-using MBOptionScreen.Settings;
+﻿using MCM.Abstractions.Attributes;
+using MCM.Abstractions.Attributes.v2;
+using MCM.Abstractions.Data;
+using MCM.Abstractions.Settings.Base.Global;
 
 namespace BattleRegen
 {
-    public partial class BattleRegenSettings : AttributeSettings<BattleRegenSettings>
+    public partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>
     {
-        public override string Id { get; set; } = "D225.BattleRegen";
+        public override string Id => "D225.BattleRegen";
 
-        public override string ModName => ModNameTextObject.ToString();
+        public override string DisplayName => ModNameTextObject.ToString();
 
-        public override string ModuleFolderName => "D225.BattleRegen";
+        public override string FolderName => "D225.BattleRegen";
 
         #region Regeneration Values
         [SettingPropertyFloatingInteger(RegenAmountName, 0f, 25f, HintText = RegenAmountHint, Order = 0, RequireRestart = false)]
-        [SettingPropertyGroup(RegenValuesName, 0)]
+        [SettingPropertyGroup(RegenValuesName, GroupOrder = 0)]
         public float RegenAmount { get; set; } = 1f;
 
         [SettingPropertyFloatingInteger(MedicineBoostName, 0f, 200f, HintText = MedicineBoostHint, Order = 1, RequireRestart = false)]
@@ -37,7 +37,7 @@ namespace BattleRegen
 
         #region Regeneration Settings
         [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 5, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName, 1)]
+        [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
         public DefaultDropdown<BattleRegenModel> RegenModelDropdown { get; set; } = new DefaultDropdown<BattleRegenModel>(new BattleRegenModel[]
         {
             BattleRegenModel.Linear,
@@ -84,7 +84,7 @@ namespace BattleRegen
 
         #region Emergency Settings
         [SettingPropertyBool(UseSliderForRegenModelName, HintText = UseSliderForRegenModelHint, Order = 4, RequireRestart = false)]
-        [SettingPropertyGroup(UseSliderForRegenModelName, 2, true)]
+        [SettingPropertyGroup(UseSliderForRegenModelName, GroupOrder = 2, IsMainToggle = true)]
         public bool UseSliderForRegenModel { get; set; } = false;
 
         [SettingPropertyInteger(SliderRegenModelName, (int)BattleRegenModel.Linear, (int)BattleRegenModel.EveOnline, HintText = SliderRegenModelHint, Order = 5, RequireRestart = false)]
@@ -100,5 +100,6 @@ namespace BattleRegen
                 else return RegenModelDropdown.SelectedValue;
             }
         }
+
     }
 }

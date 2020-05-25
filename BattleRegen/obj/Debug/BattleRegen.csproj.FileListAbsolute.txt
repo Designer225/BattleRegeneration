@@ -1,7 +1,6 @@
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\BattleRegen.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\BattleRegen.pdb
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\0Harmony.dll
-D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\MBOptionScreen.v2.0.10.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\TaleWorlds.DotNet.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\TaleWorlds.MountAndBlade.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\TaleWorlds.Library.dll
@@ -29,3 +28,6 @@ D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegen
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\obj\Debug\BattleRegen.pdb
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\TaleWorlds.CampaignSystem.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\obj\Debug\BattleRegen.csprojAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\MCMv3.dll
+D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\MCMv3.Implementation.v3.1.4.dll
+D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\BattleRegeneration\BattleRegen\bin\Debug\MCMv3.UI.v3.1.4.dll

@@ -31,11 +31,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony, Version=2.0.0.10, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Lib.Harmony.2.0.0.10\lib\net472\0Harmony.dll</HintPath>
+    <Reference Include="0Harmony, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Lib.Harmony.2.0.1\lib\net472\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="MBOptionScreen.v2.0.10, Version=2.0.10.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Bannerlord.MBOptionScreen.2.0.10\lib\net472\MBOptionScreen.v2.0.10.dll</HintPath>
+    <Reference Include="MCMv3, Version=3.1.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Bannerlord.MCM.Integrated.3.1.4\lib\net472\MCMv3.dll</HintPath>
+    </Reference>
+    <Reference Include="MCMv3.Implementation.v3.1.4, Version=3.1.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Bannerlord.MCM.Integrated.3.1.4\lib\net472\MCMv3.Implementation.v3.1.4.dll</HintPath>
+    </Reference>
+    <Reference Include="MCMv3.UI.v3.1.4, Version=3.1.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Bannerlord.MCM.Integrated.3.1.4\lib\net472\MCMv3.UI.v3.1.4.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -88,6 +94,8 @@
 xcopy $(TargetFileName) ..\..\..\bin\Win64_Shipping_Client\ /y
 xcopy $(TargetName).pdb ..\..\..\bin\Win64_Shipping_Client\ /y
 xcopy 0Harmony.dll ..\..\..\bin\Win64_Shipping_Client\ /y
-xcopy MBOptionScreen.v2.0.10.dll ..\..\..\bin\Win64_Shipping_Client\ /y</PostBuildEvent>
+xcopy MCMv3.dll ..\..\..\bin\Win64_Shipping_Client\ /y
+xcopy MCMv3.Implementation.v3.1.4.dll ..\..\..\bin\Win64_Shipping_Client\ /y
+xcopy MCMv3.UI.v3.1.4.dll ..\..\..\bin\Win64_Shipping_Client\ /y</PostBuildEvent>
   </PropertyGroup>
 </Project>
