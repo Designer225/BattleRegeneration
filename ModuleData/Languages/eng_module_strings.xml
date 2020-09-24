@@ -35,8 +35,8 @@
     <string id="BattleRegen_ApplyToEnemyHeroesHint" text="Whether the player's enemy heroes should receive passive regen. Default is true."/>
     <string id="BattleRegen_ApplyToEnemyTroopsName" text="Apply To Enemy Troops"/>
     <string id="BattleRegen_ApplyToEnemyTroopsHint" text="Whether the player's enemy troops should receive passive regen. Default is true."/>
-    <string id="BattleRegen_ApplyToMountName" text="Apply To Mounts"/>
-    <string id="BattleRegen_ApplyToMountHint" text="Whether mounts should receive passive regen. Mounts regenerate regardless of their rider's allegiance. Default is true."/>
+    <string id="BattleRegen_ApplyToAnimalName" text="Apply To Animals"/>
+    <string id="BattleRegen_ApplyToAnimalHint" text="Whether animals should receive passive regen. Animals regenerate regardless of their rider's (if any) allegiance. Default is true."/>
     <string id="BattleRegen_DebugName" text="Debug Mode"/>
     <string id="BattleRegen_DebugHint" text="Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false."/>
 

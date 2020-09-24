@@ -12,6 +12,8 @@ namespace BattleRegen
 {
     public sealed class BattleRegeneration : MissionBehaviour
     {
+        private const int HumanFamilyType = 0;
+
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly BattleRegenSettings settings;
         private readonly Mission mission;
@@ -33,8 +35,8 @@ namespace BattleRegen
                     settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
                 + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
                     settings.ApplyToPlayer, settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
-                + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, mounts? {3}",
-                    settings.ApplyToAlliedTroops, settings.ApplyToEnemyHeroes, settings.ApplyToEnemyTroops, settings.ApplyToMount));
+                + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, animals? {3}",
+                    settings.ApplyToAlliedTroops, settings.ApplyToEnemyHeroes, settings.ApplyToEnemyTroops, settings.ApplyToAnimal));
         }
 
         public override void OnMissionTick(float dt)
@@ -71,9 +73,9 @@ namespace BattleRegen
 
         private void AttemptRegenerateAgent(Agent agent, float dt)
         {
-            if (agent.IsMount)
+            if (agent.Monster.FamilyType != HumanFamilyType)
             {
-                if (settings.ApplyToMount) Regenerate(agent, dt, agent.MountAgent?.Team);
+                if (settings.ApplyToAnimal) Regenerate(agent, dt, agent.MountAgent?.Team);
             }
             else if (agent.IsPlayerControlled)
             {
@@ -211,12 +213,12 @@ namespace BattleRegen
                 modifier += agentTeam.GeneralAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * settings.CommanderMedicineBoost / 100.0;
                 healers |= Healer.General;
             }
-            if (!agent.IsMount)
+            if (agent.Monster.FamilyType == HumanFamilyType) // Since only humans have skills...
             {
                 modifier += agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
                 healers |= Healer.Self;
             }
-            else if (agent.MountAgent != null)
+            else if (agent.IsMount && agent.MountAgent != null)
             {
                 modifier += agent.MountAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
                 healers |= Healer.Rider;
@@ -231,6 +233,7 @@ namespace BattleRegen
         private string GetTroopType(Agent agent, Team agentTeam)
         {
             if (agent.IsMount) return "Mount";
+            else if (agent.Monster.FamilyType != HumanFamilyType) return "Animal";
             else if (agent.IsPlayerControlled) return "Player";
             else if (agentTeam == null)
             {

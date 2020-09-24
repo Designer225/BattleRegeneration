@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaleWorlds.Localization;
+﻿using TaleWorlds.Localization;
 
 namespace BattleRegen
 {
@@ -40,8 +35,8 @@ namespace BattleRegen
             ApplyToEnemyHeroesHint          = "{=BattleRegen_ApplyToEnemyHeroesHint}Whether the player's enemy heroes should receive passive regen. Default is true.",
             ApplyToEnemyTroopsName          = "{=BattleRegen_ApplyToEnemyTroopsName}Apply To Enemy Troops",
             ApplyToEnemyTroopsHint          = "{=BattleRegen_ApplyToEnemyTroopsHint}Whether the player's enemy troops should receive passive regen. Default is true.",
-            ApplyToMountName                = "{=BattleRegen_ApplyToMountName}Apply To Mounts",
-            ApplyToMountHint                = "{=BattleRegen_ApplyToMountHint}Whether mounts should receive passive regen. Mounts regenerate regardless of their rider's allegiance. Default is true.",
+            ApplyToAnimalName                = "{=BattleRegen_ApplyToAnimalName}Apply To Animals",
+            ApplyToAnimalHint                = "{=BattleRegen_ApplyToAnimalHint}Whether animals should receive passive regen. Animals regenerate regardless of their rider's (if any) allegiance. Default is true.",
             DebugName                       = "{=BattleRegen_DebugName}Debug Mode",
             DebugHint                       = "{=BattleRegen_DebugHint}Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.",
 

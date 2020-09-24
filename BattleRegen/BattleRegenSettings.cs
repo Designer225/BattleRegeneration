@@ -73,9 +73,9 @@ namespace BattleRegen
         [SettingPropertyGroup(RegenSettingsName)]
         public bool ApplyToEnemyTroops { get; set; } = true;
 
-        [SettingPropertyBool(ApplyToMountName, HintText = ApplyToMountHint, Order = 13, RequireRestart = false)]
+        [SettingPropertyBool(ApplyToAnimalName, HintText = ApplyToAnimalHint, Order = 13, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToMount { get; set; } = true;
+        public bool ApplyToAnimal { get; set; } = true;
 
         [SettingPropertyBool(DebugName, HintText = DebugHint, Order = 14, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
