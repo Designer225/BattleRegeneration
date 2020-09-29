@@ -38,12 +38,12 @@ namespace BattleRegen
             ApplyToAnimalName                = "{=BattleRegen_ApplyToAnimalName}Apply To Animals",
             ApplyToAnimalHint                = "{=BattleRegen_ApplyToAnimalHint}Whether animals should receive passive regen. Animals regenerate regardless of their rider's (if any) allegiance. Default is true.",
             DebugName                       = "{=BattleRegen_DebugName}Debug Mode",
-            DebugHint                       = "{=BattleRegen_DebugHint}Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.",
+            DebugHint                       = "{=BattleRegen_DebugHint}Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.";
 
-            UseSliderForRegenModelName      = "{=BattleRegen_UseSliderForRegenModelName}Use Slider for Regen Model",
-            UseSliderForRegenModelHint      = "{=BattleRegen_UseSliderForRegenModelHint}Should the mod use a slider for regen instead of dropdown options.",
-            SliderRegenModelName            = "{=BattleRegen_SliderRegenModelName}Regeneration Model",
-            SliderRegenModelHint            = "{=BattleRegen_SliderRegenModelHint}Determines the model used for regenerating health. 'Linear' is 1, 'Quadratic' is 2, and 'EVE Online' is 3. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear.";
+            //UseSliderForRegenModelName      = "{=BattleRegen_UseSliderForRegenModelName}Use Slider for Regen Model",
+            //UseSliderForRegenModelHint      = "{=BattleRegen_UseSliderForRegenModelHint}Should the mod use a slider for regen instead of dropdown options.",
+            //SliderRegenModelName            = "{=BattleRegen_SliderRegenModelName}Regeneration Model",
+            //SliderRegenModelHint            = "{=BattleRegen_SliderRegenModelHint}Determines the model used for regenerating health. 'Linear' is 1, 'Quadratic' is 2, and 'EVE Online' is 3. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear.";
 
         private static readonly TextObject ModNameTextObject = new TextObject(ModNameText);
     }

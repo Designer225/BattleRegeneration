@@ -38,12 +38,7 @@ namespace BattleRegen
         #region Regeneration Settings
         [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 5, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
-        public DefaultDropdown<BattleRegenModel> RegenModelDropdown { get; set; } = new DefaultDropdown<BattleRegenModel>(new BattleRegenModel[]
-        {
-            BattleRegenModel.Linear,
-            BattleRegenModel.Quadratic,
-            BattleRegenModel.EveOnline
-        }, 0);
+        public DefaultDropdown<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
 
         [SettingPropertyBool(ApplyToPlayerName, HintText = ApplyToPlayerHint, Order = 6, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
@@ -82,23 +77,23 @@ namespace BattleRegen
         public bool Debug { get; set; } = false;
         #endregion
 
-        #region Emergency Settings
-        [SettingPropertyBool(UseSliderForRegenModelName, HintText = UseSliderForRegenModelHint, Order = 4, RequireRestart = false)]
-        [SettingPropertyGroup(UseSliderForRegenModelName, GroupOrder = 2, IsMainToggle = true)]
-        public bool UseSliderForRegenModel { get; set; } = false;
+        //#region Emergency Settings -- removed as MCM dropdown seems stable now
+        //[SettingPropertyBool(UseSliderForRegenModelName, HintText = UseSliderForRegenModelHint, Order = 4, RequireRestart = false)]
+        //[SettingPropertyGroup(UseSliderForRegenModelName, GroupOrder = 2, IsMainToggle = true)]
+        //public bool UseSliderForRegenModel { get; set; } = false;
 
-        [SettingPropertyInteger(SliderRegenModelName, (int)BattleRegenModel.Linear, (int)BattleRegenModel.EveOnline, HintText = SliderRegenModelHint, Order = 5, RequireRestart = false)]
-        [SettingPropertyGroup(UseSliderForRegenModelName)]
-        public int SliderRegenModel { get; set; } = (int)BattleRegenModel.Linear;
-        #endregion
+        //[SettingPropertyInteger(SliderRegenModelName, (int)BattleRegenModel.Linear, (int)BattleRegenModel.EveOnline, HintText = SliderRegenModelHint, Order = 5, RequireRestart = false)]
+        //[SettingPropertyGroup(UseSliderForRegenModelName)]
+        //public int SliderRegenModel { get; set; } = (int)BattleRegenModel.Linear;
+        //#endregion
 
-        public BattleRegenModel RegenModel
+        public Formula RegenModel
         {
-            get
-            {
-                if (UseSliderForRegenModel) return (BattleRegenModel)SliderRegenModel;
-                else return RegenModelDropdown.SelectedValue;
-            }
+            get => RegenModelDropdown.SelectedValue;
+            //{
+            //    if (UseSliderForRegenModel) return (BattleRegenModel)SliderRegenModel;
+            //    else return RegenModelDropdown.SelectedValue;
+            //}
         }
 
     }
