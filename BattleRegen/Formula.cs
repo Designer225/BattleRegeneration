@@ -191,7 +191,9 @@ namespace BattleRegen
             {
                 ModuleInfo m = new ModuleInfo();
                 m.Load(moduleName);
-                Modules.Add(m);
+
+                if (m.Id == "BattleRegeneration") Modules.Insert(0, m); // original mod should load first
+                else Modules.Add(m);
             }
 
             List<Formula> formulas = new List<Formula>();
