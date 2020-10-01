@@ -52,8 +52,7 @@ namespace BattleRegen
                 }
                 catch (Exception e)
                 {
-                    Debug.PrintError(string.Format("[BattleRegeneration] An exception has occurred attempting to heal {0}. Will try again next tick.\nException: {1}",
-                        agent.Name, e), e.StackTrace);
+                    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
                 }
             }
         }
@@ -66,7 +65,7 @@ namespace BattleRegen
             {
                 heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
                 if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] hero {0} has received {1} xp from battle", heroXpGainPair.Key.Name, heroXpGainPair.Value));
+                    Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Key.Name} has received {heroXpGainPair.Value} xp from battle");
             }
             heroXpGainPairs.Clear();
         }
@@ -276,7 +275,7 @@ namespace BattleRegen
                 heroXpGainPairs[commander] += cdrXpGain;
 
                 if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] commander agent {0} has received {1} xp", agentTeam.GeneralAgent.Name, cdrXpGain));
+                    Debug.Print($"[BattleRegeneration] commander agent {agentTeam.GeneralAgent.Name} has received {cdrXpGain} xp");
             }
             if ((healers & Healer.Self) == Healer.Self && agent.IsHero)
             {
@@ -288,7 +287,7 @@ namespace BattleRegen
                 heroXpGainPairs[hero] += selfXpGain;
 
                 if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] agent {0} has received {1} xp", agent.Name, selfXpGain));
+                    Debug.Print($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
             }
             if ((healers & Healer.Rider) == Healer.Rider && agent.MountAgent.IsHero)
             {
@@ -300,7 +299,7 @@ namespace BattleRegen
                 heroXpGainPairs[rider] += riderXpGain;
 
                 if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] rider agent {0} has received {1} xp", agent.MountAgent.Name, riderXpGain));
+                    Debug.Print($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
             }
         }
 
