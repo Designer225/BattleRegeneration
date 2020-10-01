@@ -238,6 +238,7 @@ namespace BattleRegen
                 }
             }
 
+            InformationManager.DisplayMessage(new InformationMessage("[BattleRegen] Loaded all installed regeneration formulas. See mod entry in MCM for details."));
             return new DefaultDropdown<Formula>(formulas, 0);
         }
     }
