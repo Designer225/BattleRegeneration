@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-16"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Formula xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-    <Name>[=BattleRegen_Linear]Linear</Name>
+    <Name>{=BattleRegen_Linear}Linear</Name>
     <Expressions xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
         <!-- Evaluated in order -->
         <d2p1:string>regenRate</d2p1:string>

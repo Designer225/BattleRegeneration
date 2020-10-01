@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-16"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Formula xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-    <Name>[=BattleRegen_Quadratic]Quadratic</Name>
+    <Name>{=BattleRegen_Quadratic}Quadratic</Name>
     <Expressions xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
         <!-- Evaluated in order -->
         <d2p1:string>solve( maxRegenRate * t + ( regenChangeRate * t^2 )/2 - health, t, 0, regenTime )</d2p1:string>
