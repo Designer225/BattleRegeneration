@@ -3,7 +3,7 @@
     <Name>[=BattleRegen_Quadratic]Quadratic</Name>
     <Expressions xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
         <!-- Evaluated in order -->
-        <d2p1:string>solve( maxRegenRate * t + ( regenChangeRate * t^2 )/2 - health, t, 0, 100 )</d2p1:string>
+        <d2p1:string>solve( maxRegenRate * t + ( regenChangeRate * t^2 )/2 - health, t, 0, regenTime )</d2p1:string>
         <d2p1:string>maxRegenRate * (regenTime - answer) / regenTime</d2p1:string>
     </Expressions>
     <Variables>
@@ -11,7 +11,7 @@
         <!-- Variables reserved: regenRate, regenTime, answer (result from previous evaluation) -->
         <!-- You may use members of Agent that use no other parameters other than 'this' (if not static) to get a value. -->
         <!-- You may also use static members of other classes that do the same. -->
-        <!-- Finally, you may define variables that themselves are mathematical results of others, or are to be used for storage -->
+        <!-- Finally, you may define variables that themselves are mathematical results of others -->
         <!-- Define your variables here -->
         <Variable>
             <Name>health</Name>
