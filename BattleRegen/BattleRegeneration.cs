@@ -189,18 +189,19 @@ namespace BattleRegen
             return regenRate;
         }
 
-        private bool SolveForFactors(double a, double b, double c, out double x1, out double x2)
-        {
-            x1 = 0;
-            x2 = 0;
-            double discriminant = b * b - 4 * a * c;
-            if (discriminant < 0) return false;
+        // Commented out, but kept because it's a good reference for other projects
+        //private bool SolveForFactors(double a, double b, double c, out double x1, out double x2)
+        //{
+        //    x1 = 0;
+        //    x2 = 0;
+        //    double discriminant = b * b - 4 * a * c;
+        //    if (discriminant < 0) return false;
 
-            double sqrtDiscriminant = Math.Sqrt(discriminant);
-            x1 = (-b + sqrtDiscriminant) / (2 * a);
-            x2 = (-b - sqrtDiscriminant) / (2 * a);
-            return true;
-        }
+        //    double sqrtDiscriminant = Math.Sqrt(discriminant);
+        //    x1 = (-b + sqrtDiscriminant) / (2 * a);
+        //    x2 = (-b - sqrtDiscriminant) / (2 * a);
+        //    return true;
+        //}
 
         private double GetHealthModifier(Agent agent, Team agentTeam, out Healer healers)
         {

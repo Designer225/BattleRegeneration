@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Formula xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
     <Name>[=BattleRegen_EveOnline]EVE Online</Name>
-    <Equations xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
-        <d2p1:string>F(regenRate) = regenRate</d2p1:string>
-    </Equations>
+    <Expressions xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <!-- Evaluated in order -->
+        <d2p1:string>health / healthLimit</d2p1:string>
+        <d2p1:string>10 * regenRate * (sqrt(answer) - answer)</d2p1:string>
+    </Expressions>
     <Variables>
+        <!-- Evaluated in order -->
         <!-- Variables reserved: regenRate, regenTime, answer (result from previous evaluation) -->
         <!-- You may use members of Agent that use no other parameters other than 'this' (if not static) to get a value. -->
         <!-- You may also use static members of other classes that do the same. -->
+        <!-- Finally, you may define variables that themselves are mathematical results of others, or are to be used for storage -->
         <!-- Define your variables here -->
-
-        <!-- But, uh, linear doesn't really have extra parameters. So... peace. -->
+        <Variable>
+            <Name>health</Name>
+            <ValueOrType>TaleWorlds.MountAndBlade.Agent</ValueOrType>
+            <TypeMember>Health</TypeMember>
+        </Variable>
+        <Variable>
+            <Name>healthLimit</Name>
+            <ValueOrType>TaleWorlds.MountAndBlade.Agent</ValueOrType>
+            <TypeMember>HealthLimit</TypeMember>
+        </Variable>
     </Variables>
 </Formula>

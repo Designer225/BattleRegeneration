@@ -31,13 +31,13 @@ namespace BattleRegen
         [DataMember(EmitDefaultValue = false, IsRequired = true, Order = 0)]
         public string Name { get; private set; }
 
-        [DataMember(EmitDefaultValue = false, IsRequired = true, Name = "Equations", Order = 1)]
-        public string[] equations;
+        [DataMember(EmitDefaultValue = false, IsRequired = true, Name = "Expressions", Order = 1)]
+        private string[] expressions;
 
-        public List<string> Equations => equations.ToList();
+        public List<string> Expressions => expressions.ToList();
 
         [DataMember(EmitDefaultValue = false, IsRequired = true, Name = "Variables", Order = 2)]
-        public Variable[] variables;
+        private Variable[] variables;
 
         public List<Variable> Variables => variables.ToList();
 
@@ -82,11 +82,11 @@ namespace BattleRegen
             }
 
             double answer = 0;
-            foreach (string str in equations)
+            foreach (string str in expressions)
             {
                 List<Argument> arguments = args.ToList();
                 arguments.Add(new Argument("answer", answer));
-                answer = new Function(str, arguments.ToArray()).calculate();
+                answer = new Expression(str, arguments.ToArray()).calculate();
             }
 
             return answer;
@@ -127,6 +127,7 @@ namespace BattleRegen
             catch (Exception e)
             {
                 Debug.PrintError($"[BattleRegen] Failed to access {member}. This will cause issues.\n\nError: {e.Message}\n\n{e.StackTrace}", e.StackTrace);
+                throw e;
             }
 
             return value;
@@ -198,15 +199,19 @@ namespace BattleRegen
         [DataMember(EmitDefaultValue = false, IsRequired = true, Order = 0)]
         public string Name { get; private set; }
 
-        [DataMember(EmitDefaultValue = false, IsRequired = true, Order = 1)]
-        public string ValueOrType { get; private set; }
+        [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 1)]
+        public string Expression { get; private set; }
 
         [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
+        public string ValueOrType { get; private set; }
+
+        [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 3)]
         public string TypeMember { get; private set; }
 
-        public Variable(string variable, string valueOrType, string typeMember = null)
+        public Variable(string variable, string expression, string valueOrType, string typeMember = null)
         {
             Name = variable;
+            Expression = expression;
             ValueOrType = valueOrType;
             TypeMember = typeMember;
         }
