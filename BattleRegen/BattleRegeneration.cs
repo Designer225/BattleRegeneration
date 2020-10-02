@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -43,8 +45,41 @@ namespace BattleRegen
         {
             base.OnMissionTick(dt);
 
-            foreach (Agent agent in mission.AllAgents)
+            //foreach (Agent agent in mission.AllAgents)
+            //{
+            //    try
+            //    {
+            //        if (agent.Health < agent.HealthLimit)
+            //            AttemptRegenerateAgent(agent, dt);
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
+            //    }
+            //}
+
+            // Multi-threadding work
+            ConcurrentQueue<Agent> agents = new ConcurrentQueue<Agent>(mission.AllAgents);
+            int threads = 2 * Environment.ProcessorCount;
+            List<Task> tasks = new List<Task>(threads);
+
+            for (int i = 0; i < threads; i++)
             {
+                Task task = new Task(() => OnAction(agents, dt));
+                task.Start();
+            }
+
+            foreach (Task task in tasks)
+                task.Wait();
+        }
+
+        private void OnAction(ConcurrentQueue<Agent> agents, float dt)
+        {
+            while (agents.Count > 0)
+            {
+                bool success = agents.TryDequeue(out Agent agent);
+                if (!success) continue; // not-so-unneccessary
+
                 try
                 {
                     if (agent.Health < agent.HealthLimit)

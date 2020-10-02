@@ -125,6 +125,7 @@ namespace BattleRegen
             return new TextObject(Name).ToString();
         }
 
+        // This piece of code is critical code, so making it multi-threadding-proof is essential
         public double Calculate(Agent agent, double regenRate, double regenTime)
         {
             // Built-in variables
@@ -182,9 +183,14 @@ namespace BattleRegen
 
                     if (variable.ExpressionObj != null) // Always evaluate an expression if there is one available
                     {
-                        variable.ExpressionObj.addArguments(args.ToArray());
-                        value = variable.ExpressionObj.calculate();
-                        variable.ExpressionObj.removeAllArguments();
+                        //variable.ExpressionObj.addArguments(args.ToArray());
+                        //value = variable.ExpressionObj.calculate();
+                        //variable.ExpressionObj.removeAllArguments();
+
+                        // Multi-threadding friendly
+                        Expression expression = new Expression(variable.ExpressionObj.getExpressionString());
+                        expression.addArguments(args.ToArray());
+                        value = expression.calculate();
                     }
                     else if (!double.IsNaN(variable.Value))
                         value = variable.Value;
@@ -213,15 +219,21 @@ namespace BattleRegen
             //}
             foreach (Expression exp in expressionCache)
             {
-                exp.addArguments(arguments);
-                exp.defineArgument("answer", answer);
-                answer = exp.calculate();
-                exp.removeAllArguments();
+                //exp.addArguments(arguments);
+                //exp.defineArgument("answer", answer);
+                //answer = exp.calculate();
+                //exp.removeAllArguments();
+
+                // Multi-threadding friendly
+                Expression exp2 = new Expression(exp.getExpressionString());
+                exp2.addArguments(arguments);
+                exp2.defineArgument("answer", answer);
+                answer = exp2.calculate();
             }
 
             if (double.IsNaN(answer))
             {
-                string error = "Final answer is not a number, defaulting to linear model.";
+                string error = "[BattleRegen] Final answer is not a number, defaulting to linear model.";
                 Debug.Print(error);
                 InformationManager.DisplayMessage(new InformationMessage(error));
                 answer = regenRate; // default to linear model if model calculation fails
