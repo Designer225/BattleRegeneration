@@ -19,14 +19,12 @@ namespace BattleRegen
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly BattleRegenSettings settings;
         private readonly Mission mission;
-        //private bool modelErrorDetected;
         private readonly Dictionary<Hero, double> heroXpGainPairs;
 
         public BattleRegeneration(Mission mission)
         {
             settings = BattleRegenSettings.Instance;
             this.mission = mission;
-            //modelErrorDetected = false;
             heroXpGainPairs = new Dictionary<Hero, double>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
@@ -45,50 +43,26 @@ namespace BattleRegen
         {
             base.OnMissionTick(dt);
 
-            //foreach (Agent agent in mission.AllAgents)
-            //{
-            //    try
-            //    {
-            //        if (agent.Health < agent.HealthLimit)
-            //            AttemptRegenerateAgent(agent, dt);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
-            //    }
-            //}
+            // Multi-threading work mk2
+            Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
 
-            // Multi-threadding work
-            ConcurrentQueue<Agent> agents = new ConcurrentQueue<Agent>(mission.AllAgents);
-            int threads = 2 * Environment.ProcessorCount;
-            List<Task> tasks = new List<Task>(threads);
-
-            for (int i = 0; i < threads; i++)
-            {
-                Task task = new Task(() => OnAction(agents, dt));
-                task.Start();
-            }
-
-            foreach (Task task in tasks)
-                task.Wait();
-        }
-
-        private void OnAction(ConcurrentQueue<Agent> agents, float dt)
-        {
             while (agents.Count > 0)
             {
-                bool success = agents.TryDequeue(out Agent agent);
-                if (!success) continue; // not-so-unneccessary
+                Agent agent = agents.Dequeue();
+                ThreadPool.QueueUserWorkItem(x => OnAction(agent, dt));
+            }
+        }
 
-                try
-                {
-                    if (agent.Health < agent.HealthLimit)
-                        AttemptRegenerateAgent(agent, dt);
-                }
-                catch (Exception e)
-                {
-                    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
-                }
+        private void OnAction(Agent agent, float dt)
+        {
+            try
+            {
+                if (agent.Health < agent.HealthLimit)
+                    AttemptRegenerateAgent(agent, dt);
+            }
+            catch (Exception e)
+            {
+                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
             }
         }
 
@@ -194,52 +168,11 @@ namespace BattleRegen
             double regenRate = baseRegenRate * modifier;
             double regenTime = agent.HealthLimit / regenRate;
 
-            // Commented out, but kept for posterity's sake
-            //if (settings.RegenModel == BattleRegenModel.Quadratic)
-            //{
-            //    // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d <- Agent.Health
-            //    double maxRegenRate = 2 * regenRate; // v0
-            //    double regenChangeRate = -maxRegenRate / regenTime; // a
-
-            //    if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -agent.Health, out double t1, out double t2)) // t1, t2 - t
-            //    {
-            //        if (t1 >= 0 && t1 < regenTime)
-            //            regenRate = maxRegenRate * (regenTime - t1) / regenTime;
-            //        else if (t2 >= 0 && t2 < regenTime)
-            //            regenRate = maxRegenRate * (regenTime - t2) / regenTime;
-            //        else regenRate = 0;
-            //    }
-            //}
-            //else if (settings.RegenModel == BattleRegenModel.EveOnline)
-            //{
-            //    double healthToMaxRatio = agent.Health / agent.HealthLimit;
-            //    regenRate = 10 * regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
-            //}
-            //else if (settings.RegenModel != BattleRegenModel.Linear && !modelErrorDetected)
-            //{
-            //    Debug.PrintError("[BattleRegeneration] WARNING: No known model selected! Defaulting to linear model.");
-            //    modelErrorDetected = true;
-            //}
-
             // New implementation using mXparser
             regenRate = settings.RegenModel.Calculate(agent, regenRate, regenTime);
 
             return regenRate;
         }
-
-        // Commented out, but kept because it's a good reference for other projects
-        //private bool SolveForFactors(double a, double b, double c, out double x1, out double x2)
-        //{
-        //    x1 = 0;
-        //    x2 = 0;
-        //    double discriminant = b * b - 4 * a * c;
-        //    if (discriminant < 0) return false;
-
-        //    double sqrtDiscriminant = Math.Sqrt(discriminant);
-        //    x1 = (-b + sqrtDiscriminant) / (2 * a);
-        //    x2 = (-b - sqrtDiscriminant) / (2 * a);
-        //    return true;
-        //}
 
         private double GetHealthModifier(Agent agent, Team agentTeam, out Healer healers)
         {

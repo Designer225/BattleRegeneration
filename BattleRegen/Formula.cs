@@ -137,44 +137,6 @@ namespace BattleRegen
                 regenRateArg, regenTimeArg
             };
 
-            //foreach (Variable var in variables)
-            //{
-            //    try
-            //    {
-            //        double value;
-
-            //        if (var.ExpressionObj != null) // Always evaluate an expression if there is one available
-            //            value = new Expression(var.ExpressionObj, args.ToArray()).calculate();
-            //        else if (var.ValueOrType != null)
-            //        {
-            //            bool isNum = double.TryParse(var.ValueOrType, out value);
-
-            //            if (!isNum)
-            //            {
-            //                MemberInfo[] members = AccessTools.TypeByName(var.ValueOrType)?.GetMember(var.TypeMember, AccessTools.all);
-            //                if (members == null || members.Length == 0)
-            //                    throw new ArgumentException($"No such member as {var.ValueOrType}.{var.TypeMember}");
-
-            //                foreach (var member in members)
-            //                {
-            //                    value = ProcessMember(agent, member);
-            //                    if (!double.IsNaN(value)) break;
-            //                }
-            //            }
-            //        }
-            //        else throw new ArgumentException($"{var.Name} is missing a definition: define with an expression, a value, or a type member");
-
-            //        if (double.IsNaN(value)) throw new ArgumentException($"{var.Name} evaluates to {double.NaN}. Check your expressions.");
-            //        args.Add(new Argument(var.Name, value));
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        string error = $"[BattleRegen] Variable failed to parse: {var.Name}. This will cause issues.\n\nError: {e.Message}\n\n{e.StackTrace}";
-            //        Debug.PrintError(error, e.StackTrace);
-            //        InformationManager.DisplayMessage(new InformationMessage(error));
-            //    }
-            //}
-
             foreach (CachedVariable variable in variableCache)
             {
                 try
@@ -183,11 +145,7 @@ namespace BattleRegen
 
                     if (variable.ExpressionObj != null) // Always evaluate an expression if there is one available
                     {
-                        //variable.ExpressionObj.addArguments(args.ToArray());
-                        //value = variable.ExpressionObj.calculate();
-                        //variable.ExpressionObj.removeAllArguments();
-
-                        // Multi-threadding friendly
+                        // Multi-threading friendly
                         Expression expression = new Expression(variable.ExpressionObj.getExpressionString());
                         expression.addArguments(args.ToArray());
                         value = expression.calculate();
@@ -211,20 +169,9 @@ namespace BattleRegen
 
             double answer = 0;
             Argument[] arguments = args.ToArray();
-            //foreach (string str in expressions)
-            //{
-            //    List<Argument> arguments = args.ToList();
-            //    arguments.Add(new Argument("answer", answer));
-            //    answer = new Expression(str, arguments.ToArray()).calculate();
-            //}
             foreach (Expression exp in expressionCache)
             {
-                //exp.addArguments(arguments);
-                //exp.defineArgument("answer", answer);
-                //answer = exp.calculate();
-                //exp.removeAllArguments();
-
-                // Multi-threadding friendly
+                // Multi-threading friendly
                 Expression exp2 = new Expression(exp.getExpressionString());
                 exp2.addArguments(arguments);
                 exp2.defineArgument("answer", answer);
