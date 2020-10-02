@@ -1,15 +1,13 @@
 ﻿using HarmonyLib;
 using MCM.Abstractions.Data;
 using Microsoft.CSharp;
-using org.mariuszgromada.math.mxparser;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Threading;
+using System.Text;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
@@ -18,7 +16,7 @@ using TaleWorlds.MountAndBlade;
 
 namespace BattleRegen
 {
-    public abstract class Formula
+    public abstract class Formula : IComparable<Formula>
     {
         public static readonly string ModulesPath = System.IO.Path.Combine(BasePath.Name, "Modules");
 
@@ -26,17 +24,16 @@ namespace BattleRegen
 
         public abstract string Name { get; }
 
-        public int Priority { get; }
+        public abstract string Id { get; }
+
+        public abstract int Priority { get; }
 
         public override string ToString()
         {
             return new TextObject(Name).ToString();
         }
 
-        public virtual double Calculate(Agent agent, double regenRate, double regenTime)
-        {
-            return regenRate;
-        }
+        public abstract double Calculate(Agent agent, double regenRate, double regenTime);
 
         public static DefaultDropdown<Formula> GetFormulas()
         {
@@ -54,44 +51,61 @@ namespace BattleRegen
             }
 
             List<Formula> formulas = new List<Formula>();
+            // Set up compilers
             CSharpCodeProvider codeProvider = new CSharpCodeProvider();
-
-            CodeDomProvider provider = CodeDomProvider.CreateProvider("cs");
+            CompilerParameters parameters = new CompilerParameters
+            {
+                GenerateExecutable = false,
+                GenerateInMemory = true
+            };
 
             foreach (ModuleInfo module in Modules)
             {
                 DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Alias, "ModuleData"));
                 if (dataPath.Exists)
                 {
-                    foreach (FileInfo xmlFile in dataPath.EnumerateFiles("*.BattleRegen.cs"))
+                    foreach (FileInfo csFile in dataPath.EnumerateFiles("*.battleregen.cs"))
                     {
                         try
                         {
-                            var formula = FormulaSerializer.ReadObject(xmlFile.OpenRead()) as Formula;
+                            CompilerResults results = codeProvider.CompileAssemblyFromFile(parameters, csFile.FullName);
 
-                            // Error checking
-                            foreach (Variable variable in formula.variables)
+                            if (results.Errors.Count > 0)
                             {
-                                if (BuiltInVariables.Contains(variable.Name))
-                                    throw new ArgumentException($"regenRate, regenTime, and answer are reserved variables: {variable.Name}");
+                                foreach (CompilerError error in results.Errors)
+                                    Debug.Print($"[BattleRegen] {error}");
 
-                                if (variable.Expression == null)
+                                if (!results.Errors.HasErrors)
+                                    Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} generated warnings. See above for details.");
+                                else
                                 {
-                                    if (variable.ValueOrType == null)
-                                        throw new ArgumentException($"{variable.Name} is missing a definition: define it with an expression, a value, or a type member");
-                                    else if (!double.TryParse(variable.ValueOrType, out _) && variable.TypeMember == null)
-                                        throw new ArgumentException($"{variable.Name} is missing a proper type member definition: ValueOrType and/or TypeMember are missing");
+                                    Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} failed. See above for details.");
+                                    continue;
                                 }
                             }
+                            Debug.Print($"[BattleRegen] {csFile.FullName} compiled successfully.");
 
-                            formula.CacheExpressions();
-                            formula.CacheVariables();
+                            Assembly compiledCode = results.CompiledAssembly;
+                            var types = compiledCode.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
 
-                            formulas.Add(formula);
+                            foreach (Type type in types)
+                            {
+                                if (type != null)
+                                {
+                                    ConstructorInfo constructor = AccessTools.Constructor(type, Array.Empty<Type>());
+                                    if (constructor != null)
+                                    {
+                                        Formula formula = constructor.Invoke(Array.Empty<object>()) as Formula;
+                                        formulas.Add(formula);
+                                    }
+                                    else Debug.Print($"[BattleRegen] No constructor from {type.FullName} exists that take zero parameters");
+                                }
+                                else Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {csFile.FullName}.");
+                            }
                         }
                         catch (Exception e)
                         {
-                            string error = $"[BattleRegen] Failed to load file {xmlFile.FullName}\n\nError: {e}";
+                            string error = $"[BattleRegen] Failed to load file {csFile.FullName}\n\nError: {e}";
                             Debug.Print(error);
                             InformationManager.DisplayMessage(new InformationMessage(error));
                         }
@@ -99,8 +113,17 @@ namespace BattleRegen
                 }
             }
 
+            formulas.Sort();
             InformationManager.DisplayMessage(new InformationMessage("[BattleRegen] Loaded all installed regeneration formulas. See mod entry in MCM for details."));
             return new DefaultDropdown<Formula>(formulas, 0);
+        }
+
+        public int CompareTo(Formula other)
+        {
+            int comparison = Priority.CompareTo(other.Priority);
+
+            if (comparison == 0) return Id.CompareTo(other.Id);
+            else return comparison;
         }
     }
 }
