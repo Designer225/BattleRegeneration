@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
@@ -146,9 +147,16 @@ namespace BattleRegen
                     if (variable.ExpressionObj != null) // Always evaluate an expression if there is one available
                     {
                         // Multi-threading friendly
-                        Expression expression = new Expression(variable.ExpressionObj.getExpressionString());
-                        expression.addArguments(args.ToArray());
-                        value = expression.calculate();
+                        //Expression expression = new Expression(variable.ExpressionObj.getExpressionString());
+                        //expression.addArguments(args.ToArray());
+                        //value = expression.calculate();
+
+                        lock(variable.ExpressionObj)
+                        {
+                            variable.ExpressionObj.addArguments(args.ToArray());
+                            value = variable.ExpressionObj.calculate();
+                            variable.ExpressionObj.removeAllArguments();
+                        }
                     }
                     else if (!double.IsNaN(variable.Value))
                         value = variable.Value;
@@ -172,10 +180,18 @@ namespace BattleRegen
             foreach (Expression exp in expressionCache)
             {
                 // Multi-threading friendly
-                Expression exp2 = new Expression(exp.getExpressionString());
-                exp2.addArguments(arguments);
-                exp2.defineArgument("answer", answer);
-                answer = exp2.calculate();
+                //Expression exp2 = new Expression(exp.getExpressionString());
+                //exp2.addArguments(arguments);
+                //exp2.defineArgument("answer", answer);
+                //answer = exp2.calculate();
+
+                lock(exp)
+                {
+                    exp.addArguments(arguments);
+                    exp.defineArgument("answer", answer);
+                    answer = exp.calculate();
+                    exp.removeAllArguments();
+                }
             }
 
             if (double.IsNaN(answer))

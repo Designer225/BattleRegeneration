@@ -44,33 +44,53 @@ namespace BattleRegen
             base.OnMissionTick(dt);
 
             // Multi-threading work mk3
-            ConcurrentQueue<Agent> agents = new ConcurrentQueue<Agent>(mission.AllAgents.Where(x => x.Health < x.HealthLimit));
-            int taskCount = Convert.ToInt32(Math.Ceiling(agents.Count / 2.0));
+            Queue<Agent> agents = new Queue<Agent>(mission.AllAgents.Where(x => x.Health < x.HealthLimit));
+            //int taskCount = Convert.ToInt32(Math.Ceiling(agents.Count / 2.0));
             List<Task> tasks = new List<Task>();
 
-            // Start these tasks to smooth the rest
-            for (int i = 0; i < taskCount; i++)
-                tasks.Add(Task.Run(() => OnAction(agents, dt)));
+            //for (int i = 0; i < taskCount; i++)
+            //    tasks.Add(Task.Run(() => OnAction(agents, dt)));
+
+            //while (agents.Count > 0)
+            //    tasks.Add(Task.Run(() => OnAction(agents, dt)));
+
+            while (agents.Count > 0)
+            {
+                Agent agent = agents.Dequeue();
+                tasks.Add(Task.Run(() => OnAction(agent, dt)));
+            }
 
             foreach (Task task in tasks)
                 task.Wait();
         }
 
-        private void OnAction(ConcurrentQueue<Agent> agents, float dt)
-        {
-            while (agents.Count > 0)
-            {
-                bool success = agents.TryDequeue(out Agent agent);
-                if (!success) continue;
+        //private void OnAction(ConcurrentQueue<Agent> agents, float dt)
+        //{
+        //    while (agents.Count > 0)
+        //    {
+        //        bool success = agents.TryDequeue(out Agent agent);
+        //        if (!success) continue;
 
-                try
-                {
-                    AttemptRegenerateAgent(agent, dt);
-                }
-                catch (Exception e)
-                {
-                    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
-                }
+        //        try
+        //        {
+        //            AttemptRegenerateAgent(agent, dt);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
+        //        }
+        //    }
+        //}
+
+        private void OnAction(Agent agent, float dt)
+        {
+            try
+            {
+                AttemptRegenerateAgent(agent, dt);
+            }
+            catch (Exception e)
+            {
+                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
             }
         }
 
