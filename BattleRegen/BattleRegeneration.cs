@@ -43,26 +43,34 @@ namespace BattleRegen
         {
             base.OnMissionTick(dt);
 
-            // Multi-threading work mk2
-            Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
+            // Multi-threading work mk3
+            ConcurrentQueue<Agent> agents = new ConcurrentQueue<Agent>(mission.AllAgents.Where(x => x.Health < x.HealthLimit));
+            int taskCount = Convert.ToInt32(Math.Ceiling(agents.Count / 2.0));
+            List<Task> tasks = new List<Task>();
 
-            while (agents.Count > 0)
-            {
-                Agent agent = agents.Dequeue();
-                ThreadPool.QueueUserWorkItem(x => OnAction(agent, dt));
-            }
+            // Start these tasks to smooth the rest
+            for (int i = 0; i < taskCount; i++)
+                tasks.Add(Task.Run(() => OnAction(agents, dt)));
+
+            foreach (Task task in tasks)
+                task.Wait();
         }
 
-        private void OnAction(Agent agent, float dt)
+        private void OnAction(ConcurrentQueue<Agent> agents, float dt)
         {
-            try
+            while (agents.Count > 0)
             {
-                if (agent.Health < agent.HealthLimit)
+                bool success = agents.TryDequeue(out Agent agent);
+                if (!success) continue;
+
+                try
+                {
                     AttemptRegenerateAgent(agent, dt);
-            }
-            catch (Exception e)
-            {
-                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
+                }
+                catch (Exception e)
+                {
+                    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
+                }
             }
         }
 
