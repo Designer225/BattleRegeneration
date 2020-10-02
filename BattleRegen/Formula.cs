@@ -40,11 +40,84 @@ namespace BattleRegen
 
         public IEnumerable<Variable> Variables => variables.ToList();
 
+        // for internal use
+        private List<Expression> expressionCache;
+        private List<CachedVariable> variableCache;
+
         public Formula(string name, string[] expressions, Variable[] variables)
         {
             Name = name;
             this.expressions = expressions;
             this.variables = variables;
+            CacheExpressions();
+            CacheVariables();
+        }
+
+        private void CacheExpressions()
+        {
+            expressionCache = new List<Expression>();
+
+            foreach (string expression in expressions)
+                expressionCache.Add(new Expression(expression));
+        }
+
+        private void CacheVariables()
+        {
+            variableCache = new List<CachedVariable>();
+
+            foreach (Variable variable in variables)
+            {
+                if (variable.Expression != null)
+                    variableCache.Add(new CachedVariable(variable.Name, expression: new Expression(variable.Expression)));
+                else if (variable.ValueOrType != null)
+                {
+                    bool isNum = double.TryParse(variable.ValueOrType, out double value);
+
+                    if (isNum)
+                        variableCache.Add(new CachedVariable(variable.Name, value: value));
+                    else
+                    {
+                        MemberInfo[] members = AccessTools.TypeByName(variable.ValueOrType)?.GetMember(variable.TypeMember, AccessTools.all);
+                        if (members == null || members.Length == 0)
+                            throw new ArgumentException($"No such member as {variable.ValueOrType}.{variable.TypeMember}");
+
+                        foreach (var member in members)
+                        {
+                            if (member is MethodInfo)
+                            {
+                                MethodInfo method = member as MethodInfo;
+
+                                if (method.GetParameters().Count() == 0 && (method.IsStatic || method.DeclaringType.IsAssignableFrom(typeof(Agent))))
+                                {
+                                    variableCache.Add(new CachedVariable(variable.Name, member: method));
+                                    break;
+                                }
+                            }
+                            else if (member is PropertyInfo)
+                            {
+                                PropertyInfo property = member as PropertyInfo;
+
+                                if (property.CanRead && (property.GetMethod.IsStatic || property.DeclaringType.IsAssignableFrom(typeof(Agent))))
+                                {
+                                    variableCache.Add(new CachedVariable(variable.Name, member: property));
+                                    break;
+                                }
+                            }
+                            else if (member is FieldInfo)
+                            {
+                                FieldInfo field = member as FieldInfo;
+
+                                if (field.IsStatic || field.DeclaringType.IsAssignableFrom(typeof(Agent)))
+                                {
+                                    variableCache.Add(new CachedVariable(variable.Name, member: field));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else throw new ArgumentException($"{variable.Name} is missing a definition: define with an expression, a value, or a type member");
+            }
         }
 
         public override string ToString()
@@ -63,55 +136,93 @@ namespace BattleRegen
                 regenRateArg, regenTimeArg
             };
 
-            foreach (Variable var in variables)
+            //foreach (Variable var in variables)
+            //{
+            //    try
+            //    {
+            //        double value;
+
+            //        if (var.ExpressionObj != null) // Always evaluate an expression if there is one available
+            //            value = new Expression(var.ExpressionObj, args.ToArray()).calculate();
+            //        else if (var.ValueOrType != null)
+            //        {
+            //            bool isNum = double.TryParse(var.ValueOrType, out value);
+
+            //            if (!isNum)
+            //            {
+            //                MemberInfo[] members = AccessTools.TypeByName(var.ValueOrType)?.GetMember(var.TypeMember, AccessTools.all);
+            //                if (members == null || members.Length == 0)
+            //                    throw new ArgumentException($"No such member as {var.ValueOrType}.{var.TypeMember}");
+
+            //                foreach (var member in members)
+            //                {
+            //                    value = ProcessMember(agent, member);
+            //                    if (!double.IsNaN(value)) break;
+            //                }
+            //            }
+            //        }
+            //        else throw new ArgumentException($"{var.Name} is missing a definition: define with an expression, a value, or a type member");
+
+            //        if (double.IsNaN(value)) throw new ArgumentException($"{var.Name} evaluates to {double.NaN}. Check your expressions.");
+            //        args.Add(new Argument(var.Name, value));
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        string error = $"[BattleRegen] Variable failed to parse: {var.Name}. This will cause issues.\n\nError: {e.Message}\n\n{e.StackTrace}";
+            //        Debug.PrintError(error, e.StackTrace);
+            //        InformationManager.DisplayMessage(new InformationMessage(error));
+            //    }
+            //}
+
+            foreach (CachedVariable variable in variableCache)
             {
                 try
                 {
                     double value;
 
-                    if (var.Expression != null) // Always evaluate an expression if there is one available
-                        value = new Expression(var.Expression, args.ToArray()).calculate();
-                    else if (var.ValueOrType != null)
+                    if (variable.ExpressionObj != null) // Always evaluate an expression if there is one available
                     {
-                        bool isNum = double.TryParse(var.ValueOrType, out value);
-                        if (!isNum)
-                        {
-                            MemberInfo[] members = AccessTools.TypeByName(var.ValueOrType)?.GetMember(var.TypeMember, AccessTools.all);
-                            if (members == null || members.Length == 0)
-                                throw new ArgumentException($"No such member as {var.ValueOrType}.{var.TypeMember}");
-
-                            foreach (var member in members)
-                            {
-                                value = ProcessMember(agent, member);
-                                if (!double.IsNaN(value)) break;
-                            }
-                        }
+                        variable.ExpressionObj.addArguments(args.ToArray());
+                        value = variable.ExpressionObj.calculate();
+                        variable.ExpressionObj.removeAllArguments();
                     }
-                    else throw new ArgumentException($"{var.Name} is missing a definition: define with an expression, a value, or a type member");
+                    else if (!double.IsNaN(variable.Value))
+                        value = variable.Value;
+                    else if (variable.Member != null)
+                        value = ProcessMember(agent, variable.Member);
+                    else throw new ArgumentException($"{variable.Name} is missing a definition: define with an expression, a value, or a type member");
 
-                    if (double.IsNaN(value)) throw new ArgumentException($"{var.Name} evaluates to {double.NaN}. Check your expressions.");
-                    args.Add(new Argument(var.Name, value));
+                    if (double.IsNaN(value)) throw new ArgumentException($"{variable.Name} evaluates to {double.NaN}. Check your expressions.");
+                    args.Add(new Argument(variable.Name, value));
                 }
                 catch (Exception e)
                 {
-                    string error = $"[BattleRegen] Variable failed to parse: {var.Name}. This will cause issues.\n\nError: {e.Message}\n\n{e.StackTrace}";
-                    Debug.PrintError(error, e.StackTrace);
+                    string error = $"[BattleRegen] Variable failed to parse: {variable.Name}. This will cause issues.\n\nError: {e}";
+                    Debug.Print(error);
                     InformationManager.DisplayMessage(new InformationMessage(error));
                 }
             }
 
             double answer = 0;
-            foreach (string str in expressions)
+            Argument[] arguments = args.ToArray();
+            //foreach (string str in expressions)
+            //{
+            //    List<Argument> arguments = args.ToList();
+            //    arguments.Add(new Argument("answer", answer));
+            //    answer = new Expression(str, arguments.ToArray()).calculate();
+            //}
+            foreach (Expression exp in expressionCache)
             {
-                List<Argument> arguments = args.ToList();
-                arguments.Add(new Argument("answer", answer));
-                answer = new Expression(str, arguments.ToArray()).calculate();
+                exp.addArguments(arguments);
+                exp.defineArgument("answer", answer);
+                answer = exp.calculate();
+                exp.removeAllArguments();
             }
 
             if (double.IsNaN(answer))
             {
                 string error = "Final answer is not a number, defaulting to linear model.";
-                Debug.PrintError(error);
+                Debug.Print(error);
                 InformationManager.DisplayMessage(new InformationMessage(error));
                 answer = regenRate; // default to linear model if model calculation fails
             }
@@ -128,39 +239,38 @@ namespace BattleRegen
                 {
                     MethodInfo method = member as MethodInfo;
 
-                    if (IsNumerical(method.ReturnType))
-                    {
-                        int numParams = 0; // Only non-static methods of Agent can have one (for 'this') parameter.
-                        if (method.DeclaringType == typeof(Agent) && !method.IsStatic) numParams = 1;
-                        value = Convert.ToDouble(numParams == 0 ? method.Invoke(null, Array.Empty<object>()) : method.Invoke(agent, Array.Empty<object>()));
-                    }
+                    if (method.GetParameters().Count() == 0 && IsNumerical(method.ReturnType))
+                        value = Convert.ToDouble(method.DeclaringType.IsAssignableFrom(typeof(Agent)) && !method.IsStatic
+                            ? method.Invoke(agent, Array.Empty<object>()) : method.Invoke(null, Array.Empty<object>()));
                 }
                 else if (member is PropertyInfo)
                 {
                     PropertyInfo property = member as PropertyInfo;
 
                     if (property.CanRead && IsNumerical(property.PropertyType))
-                        value = Convert.ToDouble(property.DeclaringType == typeof(Agent) && !property.GetMethod.IsStatic ? property.GetValue(agent) : property.GetValue(null));
+                        value = Convert.ToDouble(property.DeclaringType.IsAssignableFrom(typeof(Agent)) && !property.GetMethod.IsStatic
+                            ? property.GetValue(agent) : property.GetValue(null));
                 }
                 else if (member is FieldInfo)
                 {
                     FieldInfo field = member as FieldInfo;
 
                     if (IsNumerical(field.FieldType))
-                        value = Convert.ToDouble(field.DeclaringType == typeof(Agent) && !field.IsStatic ? field.GetValue(agent) : field.GetValue(null));
+                        value = Convert.ToDouble(field.DeclaringType.IsAssignableFrom(typeof(Agent)) && !field.IsStatic
+                            ? field.GetValue(agent) : field.GetValue(null));
                 }
             }
             catch (Exception e)
             {
-                string error = $"[BattleRegen] Failed to access {member}. This will cause issues.\n\nError: {e.Message}\n\n{e.StackTrace}";
-                Debug.PrintError(error, e.StackTrace);
+                string error = $"[BattleRegen] Failed to access {member}. This will cause issues.\n\nError: {e}";
+                Debug.Print(error);
                 InformationManager.DisplayMessage(new InformationMessage(error));
             }
 
             return value;
         }
 
-        private static bool IsNumerical(Type type)
+        public static bool IsNumerical(Type type)
         {
             switch (Type.GetTypeCode(type))
             {
@@ -210,26 +320,29 @@ namespace BattleRegen
                             var formula = FormulaSerializer.ReadObject(xmlFile.OpenRead()) as Formula;
 
                             // Error checking
-                            foreach (Variable var in formula.variables)
+                            foreach (Variable variable in formula.variables)
                             {
-                                if (BuiltInVariables.Contains(var.Name))
-                                    throw new ArgumentException($"regenRate, regenTime, and answer are reserved variables: {var.Name}");
+                                if (BuiltInVariables.Contains(variable.Name))
+                                    throw new ArgumentException($"regenRate, regenTime, and answer are reserved variables: {variable.Name}");
 
-                                if (var.Expression == null)
+                                if (variable.Expression == null)
                                 {
-                                    if (var.ValueOrType == null)
-                                        throw new ArgumentException($"{var.Name} is missing a definition: define it with an expression, a value, or a type member");
-                                    else if (!double.TryParse(var.ValueOrType, out _) && var.TypeMember == null)
-                                        throw new ArgumentException($"{var.Name} is missing a proper type member definition: ValueOrType and/or TypeMember are missing");
+                                    if (variable.ValueOrType == null)
+                                        throw new ArgumentException($"{variable.Name} is missing a definition: define it with an expression, a value, or a type member");
+                                    else if (!double.TryParse(variable.ValueOrType, out _) && variable.TypeMember == null)
+                                        throw new ArgumentException($"{variable.Name} is missing a proper type member definition: ValueOrType and/or TypeMember are missing");
                                 }
                             }
+
+                            formula.CacheExpressions();
+                            formula.CacheVariables();
 
                             formulas.Add(formula);
                         }
                         catch (Exception e)
                         {
-                            string error = $"[BattleRegen] Failed to load file {xmlFile.FullName}\n\nError: {e.Message}\n\n{e.StackTrace}";
-                            Debug.PrintError(error, e.StackTrace);
+                            string error = $"[BattleRegen] Failed to load file {xmlFile.FullName}\n\nError: {e}";
+                            Debug.Print(error);
                             InformationManager.DisplayMessage(new InformationMessage(error));
                         }
                     }
@@ -242,7 +355,7 @@ namespace BattleRegen
     }
 
     [DataContract(Namespace = "")]
-    public struct Variable
+    public class Variable
     {
         [DataMember(EmitDefaultValue = false, IsRequired = true, Order = 0)]
         public string Name { get; private set; }
@@ -262,6 +375,25 @@ namespace BattleRegen
             Expression = expression;
             ValueOrType = valueOrType;
             TypeMember = typeMember;
+        }
+    }
+
+    class CachedVariable
+    {
+        public string Name { get; }
+
+        public Expression ExpressionObj { get; }
+
+        public double Value { get; }
+
+        public MemberInfo Member { get; }
+
+        public CachedVariable(string variable, Expression expression = null, double value = double.NaN, MemberInfo member = null)
+        {
+            Name = variable;
+            ExpressionObj = expression;
+            Value = value;
+            Member = member;
         }
     }
 }
