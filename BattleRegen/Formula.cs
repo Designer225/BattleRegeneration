@@ -1,13 +1,12 @@
 ﻿using HarmonyLib;
 using MCM.Abstractions.Data;
-using Microsoft.CSharp;
+using Microsoft.CodeDom.Providers.DotNetCompilerPlatform;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
@@ -37,6 +36,8 @@ namespace BattleRegen
 
         public static DefaultDropdown<Formula> GetFormulas()
         {
+            InformationManager.DisplayMessage(new InformationMessage("[BattleRegen] Starting compiler service. This could take a while."));
+
             // Shamelessly copied from Custom Troop Upgrades because it's my mod
             if (!Modules.IsEmpty()) Modules.Clear();
 
@@ -52,12 +53,22 @@ namespace BattleRegen
 
             List<Formula> formulas = new List<Formula>();
             // Set up compilers
-            CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+            ProviderOptions options = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 600);
+            CSharpCodeProvider codeProvider = new CSharpCodeProvider(options);
             CompilerParameters parameters = new CompilerParameters
             {
                 GenerateExecutable = false,
                 GenerateInMemory = true
             };
+            try
+            {
+                parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).ToArray());
+            }
+            catch (Exception e)
+            {
+                Debug.Print($"[BattleRegen] Failed to add all required assemblies.\n\n{e}");
+            }
+            
 
             foreach (ModuleInfo module in Modules)
             {
