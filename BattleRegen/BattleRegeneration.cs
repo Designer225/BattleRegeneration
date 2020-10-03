@@ -196,8 +196,14 @@ namespace BattleRegen
             double regenRate = baseRegenRate * modifier;
             double regenTime = agent.HealthLimit / regenRate;
 
-            // New implementation using mXparser
-            regenRate = settings.RegenModel.Calculate(agent, regenRate, regenTime);
+            try
+            {
+                regenRate = settings.RegenModel.Calculate(agent, regenRate, regenTime);
+            }
+            catch (Exception e)
+            {
+                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to calculate regen value for {agent.Name}. Using linear instead.\nException: {e}");
+            }
 
             return regenRate;
         }
@@ -313,12 +319,4 @@ namespace BattleRegen
             Rider = 4
         }
     }
-
-    public enum BattleRegenModel
-    {
-        Linear = 1,
-        Quadratic = 2,
-        EveOnline = 3
-    }
-
 }
