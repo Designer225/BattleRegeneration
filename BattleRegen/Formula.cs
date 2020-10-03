@@ -21,6 +21,8 @@ namespace BattleRegen
 
         public static List<ModuleInfo> Modules { get; } = new List<ModuleInfo>();
 
+        private static List<Formula> Formulas { get; set; }
+
         public abstract string Name { get; }
 
         public abstract string Id { get; }
@@ -36,97 +38,100 @@ namespace BattleRegen
 
         public static DefaultDropdown<Formula> GetFormulas()
         {
-            InformationManager.DisplayMessage(new InformationMessage("[BattleRegen] Starting compiler service. This could take a while."));
-
-            // Shamelessly copied from Custom Troop Upgrades because it's my mod
-            if (!Modules.IsEmpty()) Modules.Clear();
-
-            string[] moduleNames = Utilities.GetModulesNames();
-            foreach (string moduleName in moduleNames)
+            if (Formulas == null)
             {
-                ModuleInfo m = new ModuleInfo();
-                m.Load(moduleName);
+                Debug.Print("[BattleRegen] Compiling all formulas. This could take a while.");
 
-                if (m.Id == "BattleRegeneration") Modules.Insert(0, m); // original mod should load first
-                else Modules.Add(m);
-            }
+                // Shamelessly copied from Custom Troop Upgrades because it's my mod
+                if (!Modules.IsEmpty()) Modules.Clear();
 
-            List<Formula> formulas = new List<Formula>();
-            // Set up compilers
-            ProviderOptions options = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 600);
-            CSharpCodeProvider codeProvider = new CSharpCodeProvider(options);
-            CompilerParameters parameters = new CompilerParameters
-            {
-                GenerateExecutable = false,
-                GenerateInMemory = true
-            };
-            try
-            {
-                parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).ToArray());
-            }
-            catch (Exception e)
-            {
-                Debug.Print($"[BattleRegen] Failed to add all required assemblies.\n\n{e}");
-            }
-            
-
-            foreach (ModuleInfo module in Modules)
-            {
-                DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Alias, "ModuleData"));
-                if (dataPath.Exists)
+                string[] moduleNames = Utilities.GetModulesNames();
+                foreach (string moduleName in moduleNames)
                 {
-                    foreach (FileInfo csFile in dataPath.EnumerateFiles("*.battleregen.cs"))
+                    ModuleInfo m = new ModuleInfo();
+                    m.Load(moduleName);
+
+                    if (m.Id == "BattleRegeneration") Modules.Insert(0, m); // original mod should load first
+                    else Modules.Add(m);
+                }
+
+                Formulas = new List<Formula>();
+                // Set up compilers options
+                ProviderOptions options = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
+                CSharpCodeProvider codeProvider = new CSharpCodeProvider(options);
+                CompilerParameters parameters = new CompilerParameters
+                {
+                    GenerateExecutable = false,
+                    GenerateInMemory = true
+                };
+                try
+                {
+                    parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).ToArray());
+                }
+                catch (Exception e)
+                {
+                    Debug.Print($"[BattleRegen] Failed to add all required assemblies.\n\n{e}");
+                }
+
+                foreach (ModuleInfo module in Modules)
+                {
+                    DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Alias, "ModuleData"));
+                    if (dataPath.Exists)
                     {
-                        try
+                        foreach (FileInfo csFile in dataPath.EnumerateFiles("*.battleregen.cs"))
                         {
-                            CompilerResults results = codeProvider.CompileAssemblyFromFile(parameters, csFile.FullName);
-
-                            if (results.Errors.Count > 0)
+                            try
                             {
-                                foreach (CompilerError error in results.Errors)
-                                    Debug.Print($"[BattleRegen] {error}");
+                                CompilerResults results = codeProvider.CompileAssemblyFromFile(parameters, csFile.FullName);
 
-                                if (!results.Errors.HasErrors)
-                                    Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} generated warnings. See above for details.");
-                                else
+                                if (results.Errors.Count > 0)
                                 {
-                                    Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} failed. See above for details.");
-                                    continue;
-                                }
-                            }
-                            Debug.Print($"[BattleRegen] {csFile.FullName} compiled successfully.");
+                                    foreach (CompilerError error in results.Errors)
+                                        Debug.Print($"[BattleRegen] {error}");
 
-                            Assembly compiledCode = results.CompiledAssembly;
-                            var types = compiledCode.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
-
-                            foreach (Type type in types)
-                            {
-                                if (type != null)
-                                {
-                                    ConstructorInfo constructor = AccessTools.Constructor(type, Array.Empty<Type>());
-                                    if (constructor != null)
+                                    if (!results.Errors.HasErrors)
+                                        Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} generated warnings. See above for details.");
+                                    else
                                     {
-                                        Formula formula = constructor.Invoke(Array.Empty<object>()) as Formula;
-                                        formulas.Add(formula);
+                                        Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} failed. See above for details.");
+                                        continue;
                                     }
-                                    else Debug.Print($"[BattleRegen] No constructor from {type.FullName} exists that take zero parameters");
                                 }
-                                else Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {csFile.FullName}.");
+                                Debug.Print($"[BattleRegen] {csFile.FullName} compiled successfully.");
+
+                                Assembly compiledCode = results.CompiledAssembly;
+                                var types = compiledCode.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
+
+                                foreach (Type type in types)
+                                {
+                                    if (type != null)
+                                    {
+                                        ConstructorInfo constructor = AccessTools.Constructor(type, Array.Empty<Type>());
+                                        if (constructor != null)
+                                        {
+                                            Formula formula = constructor.Invoke(Array.Empty<object>()) as Formula;
+                                            Formulas.Add(formula);
+                                        }
+                                        else Debug.Print($"[BattleRegen] No constructor from {type.FullName} exists that take zero parameters");
+                                    }
+                                    else Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {csFile.FullName}.");
+                                }
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            string error = $"[BattleRegen] Failed to load file {csFile.FullName}\n\nError: {e}";
-                            Debug.Print(error);
-                            InformationManager.DisplayMessage(new InformationMessage(error));
+                            catch (Exception e)
+                            {
+                                string error = $"[BattleRegen] Failed to load file {csFile.FullName}\n\nError: {e}";
+                                Debug.Print(error);
+                                InformationManager.DisplayMessage(new InformationMessage(error));
+                            }
                         }
                     }
                 }
+
+                Formulas.Sort();
+                Debug.Print("[BattleRegen] Loaded all installed regeneration formulas. See mod entry in MCM for details.");
             }
 
-            formulas.Sort();
-            InformationManager.DisplayMessage(new InformationMessage("[BattleRegen] Loaded all installed regeneration formulas. See mod entry in MCM for details."));
-            return new DefaultDropdown<Formula>(formulas, 0);
+            return new DefaultDropdown<Formula>(Formulas, 0);
         }
 
         public int CompareTo(Formula other)
