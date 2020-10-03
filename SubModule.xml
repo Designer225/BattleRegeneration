@@ -11,21 +11,13 @@
 		<DependedModule Id="Sandbox"/>
 		<DependedModule Id="CustomBattle"/>
 		<DependedModule Id="StoryMode"/>
+    <DependedModule Id="Bannerlord.MBOptionScreen"/>
 	</DependedModules>
   <SubModules>
     <SubModule>
       <Name value="BattleRegen"/>
       <DLLName value="BattleRegen.dll"/>
       <SubModuleClassType value="BattleRegen.SubModule"/>
-      <Tags>
-        <Tag key="DedicatedServerType" value="none" />
-        <Tag key="IsNoRenderModeElement" value="false" />
-      </Tags>
-    </SubModule>
-    <SubModule>
-      <Name value="MCMv3 Integrated Loader" />
-      <DLLName value="MCMv3.dll" />
-      <SubModuleClassType value="MCM.IntegratedLoaderSubModule" />
       <Tags>
         <Tag key="DedicatedServerType" value="none" />
         <Tag key="IsNoRenderModeElement" value="false" />
