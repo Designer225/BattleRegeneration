@@ -1,18 +1,17 @@
 <Module>
-	<Name value="Battle Regeneration"/>
-	<Id value="BattleRegeneration"/>
-	<Version value="v1.2.0"/>
-	<SingleplayerModule value="true"/>
-	<MultiplayerModule value="false"/>
-	<Official value="false"/>
-	<DependedModules>
-		<DependedModule Id="Native"/>
-		<DependedModule Id="SandBoxCore"/>
-		<DependedModule Id="Sandbox"/>
-		<DependedModule Id="CustomBattle"/>
-		<DependedModule Id="StoryMode"/>
+  <Name value="Battle Regeneration"/>
+  <Id value="BattleRegeneration"/>
+  <Version value="v1.2.0"/>
+  <SingleplayerModule value="true"/>
+  <MultiplayerModule value="false"/>
+  <Official value="false"/>
+  <DependedModules>
+    <DependedModule Id="Native"/>
+    <DependedModule Id="SandBoxCore"/>
+    <DependedModule Id="Sandbox"/>
+    <DependedModule Id="StoryMode"/>
     <DependedModule Id="Bannerlord.MBOptionScreen"/>
-	</DependedModules>
+  </DependedModules>
   <SubModules>
     <SubModule>
       <Name value="BattleRegen"/>
