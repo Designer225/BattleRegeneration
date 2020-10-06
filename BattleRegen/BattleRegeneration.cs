@@ -44,15 +44,8 @@ namespace BattleRegen
             base.OnMissionTick(dt);
 
             // Multi-threading work mk3
-            Queue<Agent> agents = new Queue<Agent>(mission.AllAgents.Where(x => x.Health < x.HealthLimit));
-            //int taskCount = Convert.ToInt32(Math.Ceiling(agents.Count / 2.0));
+            Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
             List<Task> tasks = new List<Task>();
-
-            //for (int i = 0; i < taskCount; i++)
-            //    tasks.Add(Task.Run(() => OnAction(agents, dt)));
-
-            //while (agents.Count > 0)
-            //    tasks.Add(Task.Run(() => OnAction(agents, dt)));
 
             while (agents.Count > 0)
             {
@@ -64,29 +57,12 @@ namespace BattleRegen
                 task.Wait();
         }
 
-        //private void OnAction(ConcurrentQueue<Agent> agents, float dt)
-        //{
-        //    while (agents.Count > 0)
-        //    {
-        //        bool success = agents.TryDequeue(out Agent agent);
-        //        if (!success) continue;
-
-        //        try
-        //        {
-        //            AttemptRegenerateAgent(agent, dt);
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {agent.Name}. Will try again next tick.\nException: {e}");
-        //        }
-        //    }
-        //}
-
         private void OnAction(Agent agent, float dt)
         {
             try
             {
-                AttemptRegenerateAgent(agent, dt);
+                if (agent.Health < agent.HealthLimit)
+                    AttemptRegenerateAgent(agent, dt);
             }
             catch (Exception e)
             {
@@ -100,9 +76,12 @@ namespace BattleRegen
 
             foreach (KeyValuePair<Hero, double> heroXpGainPair in heroXpGainPairs)
             {
-                heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
-                if (settings.Debug)
-                    Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Key.Name} has received {heroXpGainPair.Value} xp from battle");
+                if (heroXpGainPair.Key != default)
+                {
+                    heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
+                    if (settings.Debug)
+                        Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Key.Name} has received {heroXpGainPair.Value} xp from battle");
+                }
             }
             heroXpGainPairs.Clear();
         }
@@ -312,6 +291,7 @@ namespace BattleRegen
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }
 
+        [Flags]
         public enum Healer
         {
             General = 1,

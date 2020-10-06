@@ -77,24 +77,6 @@ namespace BattleRegen
         public bool Debug { get; set; } = false;
         #endregion
 
-        //#region Emergency Settings -- removed as MCM dropdown seems stable now
-        //[SettingPropertyBool(UseSliderForRegenModelName, HintText = UseSliderForRegenModelHint, Order = 4, RequireRestart = false)]
-        //[SettingPropertyGroup(UseSliderForRegenModelName, GroupOrder = 2, IsMainToggle = true)]
-        //public bool UseSliderForRegenModel { get; set; } = false;
-
-        //[SettingPropertyInteger(SliderRegenModelName, (int)BattleRegenModel.Linear, (int)BattleRegenModel.EveOnline, HintText = SliderRegenModelHint, Order = 5, RequireRestart = false)]
-        //[SettingPropertyGroup(UseSliderForRegenModelName)]
-        //public int SliderRegenModel { get; set; } = (int)BattleRegenModel.Linear;
-        //#endregion
-
-        public Formula RegenModel
-        {
-            get => RegenModelDropdown.SelectedValue;
-            //{
-            //    if (UseSliderForRegenModel) return (BattleRegenModel)SliderRegenModel;
-            //    else return RegenModelDropdown.SelectedValue;
-            //}
-        }
-
+        public Formula RegenModel => RegenModelDropdown.SelectedValue;
     }
 }

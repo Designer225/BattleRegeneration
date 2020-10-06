@@ -21,13 +21,13 @@ namespace BattleRegen
 
         public static List<ModuleInfo> Modules { get; } = new List<ModuleInfo>();
 
-        private static List<Formula> Formulas { get; set; }
+        private static List<Formula> formulas;
 
         public abstract string Name { get; }
 
         public abstract string Id { get; }
 
-        public abstract int Priority { get; }
+        public virtual int Priority => 0;
 
         public override string ToString()
         {
@@ -38,7 +38,7 @@ namespace BattleRegen
 
         public static DefaultDropdown<Formula> GetFormulas()
         {
-            if (Formulas == null)
+            if (formulas == null)
             {
                 Debug.Print("[BattleRegen] Compiling all formulas. This could take a while.");
 
@@ -55,7 +55,7 @@ namespace BattleRegen
                     else Modules.Add(m);
                 }
 
-                Formulas = new List<Formula>();
+                formulas = new List<Formula>();
                 // Set up compilers options
                 ProviderOptions options = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
                 CSharpCodeProvider codeProvider = new CSharpCodeProvider(options);
@@ -110,7 +110,7 @@ namespace BattleRegen
                                         if (constructor != null)
                                         {
                                             Formula formula = constructor.Invoke(Array.Empty<object>()) as Formula;
-                                            Formulas.Add(formula);
+                                            formulas.Add(formula);
                                         }
                                         else Debug.Print($"[BattleRegen] No constructor from {type.FullName} exists that take zero parameters");
                                     }
@@ -127,19 +127,17 @@ namespace BattleRegen
                     }
                 }
 
-                Formulas.Sort();
+                formulas.Sort();
                 Debug.Print("[BattleRegen] Loaded all installed regeneration formulas. See mod entry in MCM for details.");
             }
 
-            return new DefaultDropdown<Formula>(Formulas, 0);
+            return new DefaultDropdown<Formula>(formulas, 0);
         }
 
         public int CompareTo(Formula other)
         {
             int comparison = Priority.CompareTo(other.Priority);
-
-            if (comparison == 0) return Id.CompareTo(other.Id);
-            else return comparison;
+            return comparison == 0 ? Id.CompareTo(other.Id) : comparison;
         }
     }
 }
