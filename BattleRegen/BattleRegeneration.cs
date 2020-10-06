@@ -12,7 +12,7 @@ using TaleWorlds.MountAndBlade;
 
 namespace BattleRegen
 {
-    public sealed class BattleRegeneration : MissionBehaviour
+    sealed class BattleRegeneration : MissionBehaviour
     {
         private const int HumanFamilyType = 0;
 

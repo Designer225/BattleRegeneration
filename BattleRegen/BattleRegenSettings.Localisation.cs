@@ -2,7 +2,7 @@
 
 namespace BattleRegen
 {
-    public partial class BattleRegenSettings
+    partial class BattleRegenSettings
     {
         internal const string ModNameText   = "{=BattleRegen_ModNameText}Battle Regeneration",
 

@@ -5,7 +5,7 @@ using MCM.Abstractions.Settings.Base.Global;
 
 namespace BattleRegen
 {
-    public partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>
+    partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>
     {
         public override string Id => "D225.BattleRegen";
 

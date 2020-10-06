@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace BattleRegen
 {
-    public class SubModule : MBSubModuleBase
+    class SubModule : MBSubModuleBase
     {
         protected override void OnSubModuleLoad()
         {
@@ -27,7 +27,7 @@ namespace BattleRegen
     }
 
     [HarmonyPatch(typeof(Agent), nameof(Agent.Health), MethodType.Setter)]
-    public static class Agent_SetHealth_Patch
+    static class Agent_SetHealth_Patch
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
