@@ -43,6 +43,8 @@ namespace BattleRegen
         {
             base.OnMissionTick(dt);
 
+            if (mission.MissionEnded()) return;
+
             // Multi-threading work mk3
             Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
             List<Task> tasks = new List<Task>();
@@ -76,11 +78,18 @@ namespace BattleRegen
 
             foreach (KeyValuePair<Hero, double> heroXpGainPair in heroXpGainPairs)
             {
-                if (heroXpGainPair.Key != default)
+                try
                 {
-                    heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
-                    if (settings.Debug)
-                        Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Key.Name} has received {heroXpGainPair.Value} xp from battle");
+                    if (heroXpGainPair.Key != default)
+                    {
+                        heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
+                        if (settings.Debug)
+                            Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Key.Name} has received {heroXpGainPair.Value} xp from battle");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.Print($"[BattleRegeneration] An error occurred attempting to add XP to a hero.\n{e}");
                 }
             }
             heroXpGainPairs.Clear();
