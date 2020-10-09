@@ -14,9 +14,9 @@ namespace BattleRegen
             CommanderMedicineBoostName      = "{=BattleRegen_CommanderMedicineBoostName}Medicine Boost (Percents) For Commanders",
             CommanderMedicineBoostHint      = "{=BattleRegen_CommanderMedicineBoostHint}Regen is increased by this percentage for every 50 points in a commander's medicine skills. Bonuses stack additively. Default is 25%.",
             XpGainName                      = "{=BattleRegen_XpGainName}XP Gain Per Full Health",
-            XpGainHint                      = "{=BattleRegen_XpGainHint}How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 1.",
+            XpGainHint                      = "{=BattleRegen_XpGainHint}How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 5.",
             CommanderXpGainName             = "{=BattleRegen_CommanderXpGainName}XP Gain Per Full Health For Commanders",
-            CommanderXpGainHint             = "{=BattleRegen_CommanderXpGainHint}How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.1.",
+            CommanderXpGainHint             = "{=BattleRegen_CommanderXpGainHint}How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.5.",
             
             RegenSettingsName               = "{=BattleRegen_RegenSettingsName}Regeneration Settings",
             RegenModelDropdownName          = "{=BattleRegen_RegenModelDropdownName}Regeneration Model",

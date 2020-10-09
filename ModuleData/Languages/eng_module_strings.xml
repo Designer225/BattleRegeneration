@@ -14,9 +14,9 @@
     <string id="BattleRegen_CommanderMedicineBoostName" text="Medicine Boost (Percents) For Commanders"/>
     <string id="BattleRegen_CommanderMedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a commander's medicine skills. Bonuses stack additively. Default is 25%."/>
     <string id="BattleRegen_XpGainName" text="XP Gain Per Full Health"/>
-    <string id="BattleRegen_XpGainHint" text="How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 1."/>
+    <string id="BattleRegen_XpGainHint" text="How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 5."/>
     <string id="BattleRegen_CommanderXpGainName" text="XP Gain Per Full Health For Commanders"/>
-    <string id="BattleRegen_CommanderXpGainHint" text="How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.1."/>
+    <string id="BattleRegen_CommanderXpGainHint" text="How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.5."/>
 
     <string id="BattleRegen_RegenSettingsName" text="Regeneration Settings"/>
     <string id="BattleRegen_RegenModelDropdownName" text="Regeneration Model"/>
