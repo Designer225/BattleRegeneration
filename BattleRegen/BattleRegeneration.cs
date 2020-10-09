@@ -19,13 +19,13 @@ namespace BattleRegen
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly BattleRegenSettings settings;
         private readonly Mission mission;
-        private readonly Dictionary<Hero, double> heroXpGainPairs;
+        private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
 
         public BattleRegeneration(Mission mission)
         {
             settings = BattleRegenSettings.Instance;
             this.mission = mission;
-            heroXpGainPairs = new Dictionary<Hero, double>();
+            heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
             Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
@@ -76,15 +76,18 @@ namespace BattleRegen
         {
             base.OnEndMission();
 
-            foreach (KeyValuePair<Hero, double> heroXpGainPair in heroXpGainPairs)
+            while (!heroXpGainPairs.IsEmpty)
             {
+                bool success = heroXpGainPairs.TryDequeue(out Tuple<Hero, double> heroXpGainPair);
+                if (!success) continue;
+
                 try
                 {
-                    if (heroXpGainPair.Key != default)
+                    if (heroXpGainPair.Item1 != default)
                     {
-                        heroXpGainPair.Key.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Value));
+                        heroXpGainPair.Item1.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Item2));
                         if (settings.Debug)
-                            Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Key.Name} has received {heroXpGainPair.Value} xp from battle");
+                            Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Item1.Name} has received {heroXpGainPair.Item2} xp from battle");
                     }
                 }
                 catch (Exception e)
@@ -92,7 +95,6 @@ namespace BattleRegen
                     Debug.Print($"[BattleRegeneration] An error occurred attempting to add XP to a hero.\n{e}");
                 }
             }
-            heroXpGainPairs.Clear();
         }
 
         private void AttemptRegenerateAgent(Agent agent, float dt)
@@ -259,10 +261,7 @@ namespace BattleRegen
             {
                 double cdrXpGain = xpGain * settings.CommanderXpGain;
                 Hero commander = (agentTeam.GeneralAgent.Character as CharacterObject).HeroObject;
-
-                if (!heroXpGainPairs.ContainsKey(commander))
-                    heroXpGainPairs[commander] = 0.0;
-                heroXpGainPairs[commander] += cdrXpGain;
+                heroXpGainPairs.Enqueue(new Tuple<Hero, double>(commander, cdrXpGain));
 
                 if (settings.Debug)
                     Debug.Print($"[BattleRegeneration] commander agent {agentTeam.GeneralAgent.Name} has received {cdrXpGain} xp");
@@ -271,10 +270,7 @@ namespace BattleRegen
             {
                 double selfXpGain = xpGain * settings.XpGain;
                 Hero hero = (agent.Character as CharacterObject).HeroObject;
-
-                if (!heroXpGainPairs.ContainsKey(hero))
-                    heroXpGainPairs[hero] = 0.0;
-                heroXpGainPairs[hero] += selfXpGain;
+                heroXpGainPairs.Enqueue(new Tuple<Hero, double>(hero, selfXpGain));
 
                 if (settings.Debug)
                     Debug.Print($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
@@ -283,10 +279,7 @@ namespace BattleRegen
             {
                 double riderXpGain = xpGain * settings.XpGain;
                 Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
-
-                if (!heroXpGainPairs.ContainsKey(rider))
-                    heroXpGainPairs[rider] = 0.0;
-                heroXpGainPairs[rider] += riderXpGain;
+                heroXpGainPairs.Enqueue(new Tuple<Hero, double>(rider, riderXpGain));
 
                 if (settings.Debug)
                     Debug.Print($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
@@ -296,7 +289,10 @@ namespace BattleRegen
         public override void OnMissionRestart()
         {
             base.OnMissionRestart();
-            heroXpGainPairs.Clear();
+
+            while (!heroXpGainPairs.IsEmpty)
+                heroXpGainPairs.TryDequeue(out _);
+
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }
 

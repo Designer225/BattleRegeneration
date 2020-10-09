@@ -26,13 +26,13 @@ namespace BattleRegen
         [SettingPropertyGroup(RegenValuesName)]
         public float CommanderMedicineBoost { get; set; } = 25f;
 
-        [SettingPropertyFloatingInteger(XpGainName, 0f, 10f, HintText = XpGainHint, Order = 3, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(XpGainName, 0f, 100f, HintText = XpGainHint, Order = 3, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
-        public float XpGain { get; set; } = 1f;
+        public float XpGain { get; set; } = 5f;
 
-        [SettingPropertyFloatingInteger(CommanderXpGainName, 0f, 10f, HintText = CommanderXpGainHint, Order = 4, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(CommanderXpGainName, 0f, 100f, HintText = CommanderXpGainHint, Order = 4, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
-        public float CommanderXpGain { get; set; } = 0.1f;
+        public float CommanderXpGain { get; set; } = 0.5f;
         #endregion
 
         #region Regeneration Settings
