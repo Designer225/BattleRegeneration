@@ -1,11 +1,96 @@
 ﻿using MCM.Abstractions.Attributes;
 using MCM.Abstractions.Attributes.v2;
-using MCM.Abstractions.Data;
+using MCM.Abstractions.Dropdown;
 using MCM.Abstractions.Settings.Base.Global;
 
 namespace BattleRegen
 {
-    partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>
+    static class BattleRegenSettingsUtil
+    {
+        private static IBattleRegenSettings instance;
+
+        public static IBattleRegenSettings Instance
+        {
+            get
+            {
+                if (instance == null)
+                    instance = BattleRegenSettings.Instance as IBattleRegenSettings ?? new BattleRegenDefaultSettings();
+                return instance;
+            }
+        }
+    }
+
+    interface IBattleRegenSettings
+    {
+        float RegenAmount { get; set; }
+
+        float MedicineBoost { get; set; }
+
+        float CommanderMedicineBoost { get; set; }
+
+        float XpGain { get; set; }
+
+        float CommanderXpGain { get; set; }
+
+        DropdownDefault<Formula> RegenModelDropdown { get; set; }
+
+        bool ApplyToPlayer { get; set; }
+
+        bool ApplyToCompanions { get; set; }
+
+        bool ApplyToAlliedHeroes { get; set; }
+
+        bool ApplyToPartyTroops { get; set; }
+
+        bool ApplyToAlliedTroops { get; set; }
+
+        bool ApplyToEnemyHeroes { get; set; }
+
+        bool ApplyToEnemyTroops { get; set; }
+
+        bool ApplyToAnimal { get; set; }
+
+        bool Debug { get; set; }
+
+        Formula RegenModel { get; }
+    }
+
+    class BattleRegenDefaultSettings : IBattleRegenSettings
+    {
+        public float RegenAmount { get; set; } = 1f;
+
+        public float MedicineBoost { get; set; } = 50f;
+
+        public float CommanderMedicineBoost { get; set; } = 25f;
+
+        public float XpGain { get; set; } = 5f;
+
+        public float CommanderXpGain { get; set; } = 0.5f;
+
+        public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
+
+        public bool ApplyToPlayer { get; set; } = true;
+
+        public bool ApplyToCompanions { get; set; } = true;
+
+        public bool ApplyToAlliedHeroes { get; set; } = true;
+
+        public bool ApplyToPartyTroops { get; set; } = true;
+
+        public bool ApplyToAlliedTroops { get; set; } = true;
+
+        public bool ApplyToEnemyHeroes { get; set; } = true;
+
+        public bool ApplyToEnemyTroops { get; set; } = true;
+
+        public bool ApplyToAnimal { get; set; } = true;
+
+        public bool Debug { get; set; } = true;
+
+        public Formula RegenModel => RegenModelDropdown.SelectedValue;
+    }
+
+    partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>, IBattleRegenSettings
     {
         public override string Id => "D225.BattleRegen";
 
@@ -38,7 +123,7 @@ namespace BattleRegen
         #region Regeneration Settings
         [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 5, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
-        public DefaultDropdown<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
+        public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
 
         [SettingPropertyBool(ApplyToPlayerName, HintText = ApplyToPlayerHint, Order = 6, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]

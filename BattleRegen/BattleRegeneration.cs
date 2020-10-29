@@ -17,13 +17,13 @@ namespace BattleRegen
         private const int HumanFamilyType = 0;
 
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
-        private readonly BattleRegenSettings settings;
+        private readonly IBattleRegenSettings settings;
         private readonly Mission mission;
         private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
 
         public BattleRegeneration(Mission mission)
         {
-            settings = BattleRegenSettings.Instance;
+            settings = BattleRegenSettingsUtil.Instance;
             this.mission = mission;
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
 

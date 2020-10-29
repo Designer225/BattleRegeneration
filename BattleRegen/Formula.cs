@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using MCM.Abstractions.Data;
+using MCM.Abstractions.Dropdown;
 using Microsoft.CodeDom.Providers.DotNetCompilerPlatform;
 using System;
 using System.CodeDom.Compiler;
@@ -78,9 +78,9 @@ namespace BattleRegen
             return comparison == 0 ? Id.CompareTo(other.Id) : comparison;
         }
 
-        internal static DefaultDropdown<Formula> GetFormulas()
+        internal static DropdownDefault<Formula> GetFormulas()
         {
-            return new DefaultDropdown<Formula>(formulas, 0);
+            return new DropdownDefault<Formula>(formulas, 0);
         }
 
         internal static List<Formula> InitializeFormulas()
