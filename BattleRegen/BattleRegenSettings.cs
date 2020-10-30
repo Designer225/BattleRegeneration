@@ -13,8 +13,7 @@ namespace BattleRegen
         {
             get
             {
-                if (instance == null)
-                    instance = BattleRegenSettings.Instance as IBattleRegenSettings ?? new BattleRegenDefaultSettings();
+                instance = BattleRegenSettings.Instance ?? instance ?? new BattleRegenDefaultSettings();
                 return instance;
             }
         }
