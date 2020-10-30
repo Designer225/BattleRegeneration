@@ -96,6 +96,8 @@ namespace BattleRegen
 
         public override string DisplayName => ModNameTextObject.ToString();
 
+        public override string FormatType => "json2";
+
         public override string FolderName => "D225.BattleRegen";
 
         #region Regeneration Values
