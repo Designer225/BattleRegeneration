@@ -43,5 +43,6 @@
     <string id="BattleRegen_Linear" text="Linear"/>
     <string id="BattleRegen_Quadratic" text="Quadratic"/>
     <string id="BattleRegen_EveOnline" text="EVE Online"/>
+    <string id="BattleRegen_Sine" text="Sine"/>
   </strings>
 </base>

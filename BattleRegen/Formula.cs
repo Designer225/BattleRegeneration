@@ -83,6 +83,42 @@ namespace BattleRegen
             return new DropdownDefault<Formula>(formulas, 0);
         }
 
+        private static void CompileCode(CodeDomProvider codeProvider, CompilerParameters parameters, FileInfo codeFile)
+        {
+            try
+            {
+                CompilerResults results = codeProvider.CompileAssemblyFromFile(parameters, codeFile.FullName);
+
+                if (results.Errors.Count > 0)
+                {
+                    foreach (CompilerError error in results.Errors)
+                        Debug.Print($"[BattleRegen] {error}");
+
+                    if (!results.Errors.HasErrors)
+                        Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} generated warnings. See above for details.");
+                    else
+                    {
+                        Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} failed. See above for details.");
+                        return;
+                    }
+                }
+                Debug.Print($"[BattleRegen] {codeFile.FullName} compiled successfully.");
+
+                Assembly compiledCode = results.CompiledAssembly;
+                var types = compiledCode.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
+
+                if (types.IsEmpty())
+                    Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {codeFile.FullName}.");
+                else types.Do(x => AddFormula(x));
+            }
+            catch (Exception e)
+            {
+                string error = $"[BattleRegen] Failed to load file {codeFile.FullName}\n\nError: {e}";
+                Debug.Print(error);
+                InformationManager.DisplayMessage(new InformationMessage(error));
+            }
+        }
+
         internal static List<Formula> InitializeFormulas()
         {
             Debug.Print("[BattleRegen] Compiling all formulas. This could take a while.");
@@ -102,8 +138,10 @@ namespace BattleRegen
 
             formulas = new List<Formula>();
             // Set up compilers options
-            ProviderOptions options = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
-            CSharpCodeProvider codeProvider = new CSharpCodeProvider(options);
+            ProviderOptions csOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
+            ProviderOptions vbOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "vbc.exe"), 60);
+            CSharpCodeProvider csCodeProvider = new CSharpCodeProvider(csOptions);
+            VBCodeProvider vbCodeProvider = new VBCodeProvider(vbOptions);
             CompilerParameters parameters = new CompilerParameters
             {
                 GenerateExecutable = false,
@@ -124,40 +162,9 @@ namespace BattleRegen
                 if (dataPath.Exists)
                 {
                     foreach (FileInfo csFile in dataPath.EnumerateFiles("*.battleregen.cs"))
-                    {
-                        try
-                        {
-                            CompilerResults results = codeProvider.CompileAssemblyFromFile(parameters, csFile.FullName);
-
-                            if (results.Errors.Count > 0)
-                            {
-                                foreach (CompilerError error in results.Errors)
-                                    Debug.Print($"[BattleRegen] {error}");
-
-                                if (!results.Errors.HasErrors)
-                                    Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} generated warnings. See above for details.");
-                                else
-                                {
-                                    Debug.Print($"[BattleRegen] Compilation of {csFile.FullName} failed. See above for details.");
-                                    continue;
-                                }
-                            }
-                            Debug.Print($"[BattleRegen] {csFile.FullName} compiled successfully.");
-
-                            Assembly compiledCode = results.CompiledAssembly;
-                            var types = compiledCode.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
-
-                            if (types.IsEmpty())
-                                Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {csFile.FullName}.");
-                            else types.Do(x => AddFormula(x));
-                        }
-                        catch (Exception e)
-                        {
-                            string error = $"[BattleRegen] Failed to load file {csFile.FullName}\n\nError: {e}";
-                            Debug.Print(error);
-                            InformationManager.DisplayMessage(new InformationMessage(error));
-                        }
-                    }
+                        CompileCode(csCodeProvider, parameters, csFile);
+                    foreach (FileInfo vbFile in dataPath.EnumerateFiles("*.battleregen.vb"))
+                        CompileCode(vbCodeProvider, parameters, vbFile);
                 }
             }
 
@@ -167,7 +174,7 @@ namespace BattleRegen
         }
 
         /// <summary>
-        /// Adds a formula, given the type parameter..
+        /// Adds a formula, given the type parameter.
         /// </summary>
         /// <typeparam name="T">A subtype of <see cref="Formula"/>.</typeparam>
         /// <returns>Whether the addition is successful.</returns>
