@@ -1,7 +1,7 @@
 <Module>
   <Name value="Battle Regeneration"/>
   <Id value="BattleRegeneration"/>
-  <Version value="v1.2.2"/>
+  <Version value="v1.2.3"/>
   <SingleplayerModule value="true"/>
   <MultiplayerModule value="false"/>
   <Official value="false"/>
