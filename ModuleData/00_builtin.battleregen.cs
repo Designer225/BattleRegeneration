@@ -89,19 +89,20 @@ namespace BattleRegen.Formulas
     }
 
     // Sine regen formula - credit: WyrdOh (https://forums.nexusmods.com/index.php?showtopic=8702373/#entry86794963)
-    public sealed class SineFormula : Formula
-    {
-        public override string Name => "{=BattleRegen_Sine}Sine";
+    // Disabled as it is rewritten in Visual Basic and bug-fixed; see 01_vb.battleregen.vb
+    //public sealed class SineFormula : Formula
+    //{
+    //    public override string Name => "{=BattleRegen_Sine}Sine";
 
-        public override string Id => "03_Sine";
+    //    public override string Id => "03_Sine";
 
-        // Built-in values must be loaded first. Sine should be right behind EveOnline.
-        public override int Priority => int.MinValue;
+    //    // Built-in values must be loaded first. Sine should be right behind EveOnline.
+    //    public override int Priority => int.MinValue;
 
-        public override double Calculate(Agent agent, double regenRate, double regenTime)
-        {
-            double SinehealthToMaxRatio = agent.Health / agent.HealthLimit;
-            return (25 * regenRate) * (Math.Sin(Math.PI * SinehealthToMaxRatio) / 100);
-        }
-    }
+    //    public override double Calculate(Agent agent, double regenRate, double regenTime)
+    //    {
+    //        double SinehealthToMaxRatio = agent.Health / agent.HealthLimit;
+    //        return (25 * regenRate) * (Math.Sin(Math.PI * SinehealthToMaxRatio) / 100);
+    //    }
+    //}
 }

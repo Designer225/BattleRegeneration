@@ -149,7 +149,8 @@ namespace BattleRegen
             };
             try
             {
-                parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).ToArray());
+                parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic)
+                    .Select(x => x.Location).Where(x => !x.IsEmpty()).ToArray());
             }
             catch (Exception e)
             {
