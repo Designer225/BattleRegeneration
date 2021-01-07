@@ -2,6 +2,12 @@
 using MCM.Abstractions.Attributes.v2;
 using MCM.Abstractions.Dropdown;
 using MCM.Abstractions.Settings.Base.Global;
+using System;
+using System.IO;
+using System.Text;
+using System.Xml;
+using System.Xml.Serialization;
+using TaleWorlds.Library;
 
 namespace BattleRegen
 {
@@ -9,11 +15,61 @@ namespace BattleRegen
     {
         private static IBattleRegenSettings instance;
 
+        public static int ExceptionCount { get; internal set; }
+
+        private static FileInfo ConfigFile { get; } = new FileInfo(Path.Combine(BasePath.Name, "Modules", "CharacterCreation.config.xml"));
+
         public static IBattleRegenSettings Instance
         {
             get
             {
-                instance = BattleRegenSettings.Instance ?? instance ?? new BattleRegenDefaultSettings();
+                // attempt to load MCM config
+                try
+                {
+                    instance = BattleRegenSettings.Instance ?? instance;
+                }
+                catch (Exception e)
+                {
+                    if (ExceptionCount < 100) // don't need this populating the log file
+                    {
+                        ExceptionCount++;
+                        Debug.Print(string.Format("[BattleRegeneration] Failed to obtain MCM config, defaulting to config file.\n\nError: {1}\n\n{2}",
+                            ConfigFile.FullName, e.Message, e.StackTrace));
+                    }
+                }
+
+                // load config file if MCM config load fails
+                if (instance == default)
+                {
+                    var serializer = new XmlSerializer(typeof(BattleRegenDefaultSettings));
+                    if (ConfigFile.Exists)
+                    {
+                        try
+                        {
+                            using (var stream = ConfigFile.OpenText())
+                                instance = serializer.Deserialize(stream) as BattleRegenDefaultSettings;
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.Print(string.Format("[BattleRegeneration] Failed to load file {0}\n\nError: {1}\n\n{2}",
+                                ConfigFile.FullName, e.Message, e.StackTrace));
+                        }
+                    }
+
+                    if (instance == default)
+                    {
+                        instance = new BattleRegenDefaultSettings();
+                        using (var stream = ConfigFile.Open(FileMode.Create))
+                        {
+                            var xmlWritter = new XmlTextWriter(stream, Encoding.UTF8)
+                            {
+                                Formatting = Formatting.Indented,
+                                Indentation = 4
+                            };
+                            serializer.Serialize(xmlWritter, instance);
+                        }
+                    }
+                }
                 return instance;
             }
         }
@@ -54,39 +110,57 @@ namespace BattleRegen
         Formula RegenModel { get; }
     }
 
+    [XmlRoot("BattleRegeneration", IsNullable = false)]
     class BattleRegenDefaultSettings : IBattleRegenSettings
     {
+        [XmlElement(DataType = "float")]
         public float RegenAmount { get; set; } = 1f;
 
+        [XmlElement(DataType = "float")]
         public float MedicineBoost { get; set; } = 50f;
 
+        [XmlElement(DataType = "float")]
         public float CommanderMedicineBoost { get; set; } = 25f;
 
+        [XmlElement(DataType = "float")]
         public float XpGain { get; set; } = 5f;
 
+        [XmlElement(DataType = "float")]
         public float CommanderXpGain { get; set; } = 0.5f;
 
-        public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
+        public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas(); // not serialized as the list should be built only once
 
+        [XmlElement]
+        public string RegenModelString { get; set; } = "00_Linear"; // had to hard code this because of necessity
+
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToPlayer { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToCompanions { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToAlliedHeroes { get; set; } = true;
-
+        
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToPartyTroops { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToAlliedTroops { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToEnemyHeroes { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToEnemyTroops { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool ApplyToAnimal { get; set; } = true;
 
+        [XmlElement(DataType = "boolean")]
         public bool Debug { get; set; } = true;
 
-        public Formula RegenModel => RegenModelDropdown.SelectedValue;
+        public Formula RegenModel => RegenModelDropdown.Find(x => x.Id == RegenModelString); // also not serialized as this is supposed to return a value at runtime
     }
 
     partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>, IBattleRegenSettings
