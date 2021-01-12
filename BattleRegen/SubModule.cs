@@ -17,6 +17,9 @@ namespace BattleRegen
         {
             base.OnSubModuleLoad();
             new Harmony("d225.battleregen").PatchAll();
+
+            // load config first
+            _ = BattleRegenSettingsUtil.Instance;
         }
 
         public override void OnMissionBehaviourInitialize(Mission mission)

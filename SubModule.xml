@@ -10,7 +10,6 @@
     <DependedModule Id="SandBoxCore"/>
     <DependedModule Id="Sandbox"/>
     <DependedModule Id="StoryMode"/>
-    <DependedModule Id="Bannerlord.MBOptionScreen"/>
   </DependedModules>
   <SubModules>
     <SubModule>

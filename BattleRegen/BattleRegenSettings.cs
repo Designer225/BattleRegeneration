@@ -17,7 +17,7 @@ namespace BattleRegen
 
         public static int ExceptionCount { get; internal set; }
 
-        private static FileInfo ConfigFile { get; } = new FileInfo(Path.Combine(BasePath.Name, "Modules", "CharacterCreation.config.xml"));
+        private static FileInfo ConfigFile { get; } = new FileInfo(Path.Combine(BasePath.Name, "Modules", "BattleRegeneration.config.xml"));
 
         public static IBattleRegenSettings Instance
         {
@@ -111,7 +111,8 @@ namespace BattleRegen
     }
 
     [XmlRoot("BattleRegeneration", IsNullable = false)]
-    class BattleRegenDefaultSettings : IBattleRegenSettings
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member - suppressed because XmlSerializer complains about non-public classes
+    public class BattleRegenDefaultSettings : IBattleRegenSettings
     {
         [XmlElement(DataType = "float")]
         public float RegenAmount { get; set; } = 1f;
@@ -128,6 +129,7 @@ namespace BattleRegen
         [XmlElement(DataType = "float")]
         public float CommanderXpGain { get; set; } = 0.5f;
 
+        [XmlIgnore]
         public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas(); // not serialized as the list should be built only once
 
         [XmlElement]
@@ -160,8 +162,10 @@ namespace BattleRegen
         [XmlElement(DataType = "boolean")]
         public bool Debug { get; set; } = true;
 
+        [XmlIgnore]
         public Formula RegenModel => RegenModelDropdown.Find(x => x.Id == RegenModelString); // also not serialized as this is supposed to return a value at runtime
     }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
     partial class BattleRegenSettings : AttributeGlobalSettings<BattleRegenSettings>, IBattleRegenSettings
     {
