@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SandBox;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +44,13 @@ namespace BattleRegen
         {
             base.OnMissionTick(dt);
 
-            if (mission.MissionEnded()) return;
+            if (mission.MissionEnded() || mission.CombatType == Mission.MissionCombatType.NoCombat || mission.IsMissionEnding)
+                return;
+            else
+            {
+                var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
+                if (arenaController != default && arenaController.AfterPractice) return;
+            }
 
             // Multi-threading work mk3
             Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
