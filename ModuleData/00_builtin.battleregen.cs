@@ -4,7 +4,7 @@ using System;
 using TaleWorlds.MountAndBlade;
 
 // Namespaces are recommended for organization purposes. You do not need to define your formulas in the BattleRegen.Formulas namespace. In fact, you are discouraged from
-// doing so, since it's meant for Battle Regeneration's custom formulas.
+// doing so, since it's meant for Battle Regeneration's formulas.
 // Supported languages: C# and Visual Basic. Make sure code files end in .battleregen.cs (C#) or .battleregen.vb (Visual Basic).
 namespace BattleRegen.Formulas
 {
@@ -22,9 +22,9 @@ namespace BattleRegen.Formulas
         public override int Priority => int.MinValue;
 
         // You must define this method as it is called by the game when regenerating.
-        public override double Calculate(Agent agent, double regenRate, double regenTime)
+        public override double Calculate(RegenDataInfo data)
         {
-            return regenRate;
+            return data.RegenRate;
         }
     }
 
@@ -38,22 +38,21 @@ namespace BattleRegen.Formulas
         // Built-in values must be loaded first. Quadratic should be right behind Linear.
         public override int Priority => int.MinValue;
 
-        public override double Calculate(Agent agent, double regenRate, double regenTime)
+        public override double Calculate(RegenDataInfo data)
         {
             // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d
-            double maxRegenRate = 2 * regenRate;
-            double regenChangeRate = -maxRegenRate / regenTime;
+            double maxRegenRate = 2 * data.RegenRate;
+            double regenChangeRate = -maxRegenRate / data.OriginalRegenTime;
 
-            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -agent.Health, out double t1, out double t2))
+            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -data.Agent.Health, out double t1, out double t2))
             {
-                if (t1 >= 0 && t1 < regenTime)
-                    regenRate = maxRegenRate * (regenTime - t1) / regenTime;
-                else if (t2 >= 0 && t2 < regenTime)
-                    regenRate = maxRegenRate * (regenTime - t2) / regenTime;
-                else regenRate = 0;
+                if (t1 >= 0 && t1 < data.RegenTime)
+                    return maxRegenRate * (data.RegenTime - t1) / data.RegenTime;
+                else if (t2 >= 0 && t2 < data.RegenTime)
+                    return maxRegenRate * (data.RegenTime - t2) / data.RegenTime;
             }
 
-            return regenRate;
+            return 0.0;
         }
 
         // Helper method for the above formula - yes, you can do that
@@ -81,28 +80,10 @@ namespace BattleRegen.Formulas
         // Built-in values must be loaded first. EveOnline should be right behind Quadratic.
         public override int Priority => int.MinValue;
 
-        public override double Calculate(Agent agent, double regenRate, double regenTime)
+        public override double Calculate(RegenDataInfo data)
         {
-            double healthToMaxRatio = agent.Health / agent.HealthLimit;
-            return 10 * regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
+            double healthToMaxRatio = data.Agent.Health / data.Agent.HealthLimit;
+            return 10 * data.RegenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
         }
     }
-
-    // Sine regen formula - credit: WyrdOh (https://forums.nexusmods.com/index.php?showtopic=8702373/#entry86794963)
-    // Disabled as it is rewritten in Visual Basic and bug-fixed; see 01_vb.battleregen.vb
-    //public sealed class SineFormula : Formula
-    //{
-    //    public override string Name => "{=BattleRegen_Sine}Sine";
-
-    //    public override string Id => "03_Sine";
-
-    //    // Built-in values must be loaded first. Sine should be right behind EveOnline.
-    //    public override int Priority => int.MinValue;
-
-    //    public override double Calculate(Agent agent, double regenRate, double regenTime)
-    //    {
-    //        double SinehealthToMaxRatio = agent.Health / agent.HealthLimit;
-    //        return (25 * regenRate) * (Math.Sin(Math.PI * SinehealthToMaxRatio) / 100);
-    //    }
-    //}
 }

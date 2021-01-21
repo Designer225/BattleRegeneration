@@ -59,13 +59,33 @@ namespace BattleRegen
         }
 
         /// <summary>
-        /// Performs calculation with this formula, given the parameters, and returns a value. Subclasses must provide their own implementations of this method.
+        /// Performs calculation with this formula, given regeneration data, and returns a value. Subclasses should provide their own implementation of this method,
+        /// for this method returns zero by default.
+        /// </summary>
+        /// <param name="data">The regeneration data information. See <see cref="RegenDataInfo"/>.</param>
+        /// <returns>The modified regeneration rate.</returns>
+        public virtual double Calculate(RegenDataInfo data)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            return Calculate(data.Agent, data.RegenRate, data.OriginalRegenTime);
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="Calculate(RegenDataInfo)"/>
+        /// <para />
+        /// Obsoleted in v1.2.4; override <see cref="Calculate(RegenDataInfo)"/> instead. This method only remains for compatibility reasons.
         /// </summary>
         /// <param name="agent">The agent whose stat will be used for calculation.</param>
         /// <param name="regenRate">The regeneration rate for the specified agent.</param>
         /// <param name="regenTime">The time it takes for the specified agent to be fully healed from zero.</param>
         /// <returns>The modified regeneration rate.</returns>
-        public abstract double Calculate(Agent agent, double regenRate, double regenTime);
+        /// <seealso cref="Calculate(RegenDataInfo)"/>
+        [Obsolete("Superseded by Calculate(Agent, float, double, double); override that method instead.")]
+        public virtual double Calculate(Agent agent, double regenRate, double regenTime)
+        {
+            return 0.0;
+        }
 
         /// <summary>
         /// Compares the current formula with the other formula. Formulas are sorted first by Priority and then by Id.
@@ -175,17 +195,15 @@ namespace BattleRegen
         }
 
         /// <summary>
-        /// Adds a formula, given the type parameter.
+        /// Adds a formula, given the type parameter. If two formulas with the same <see cref="Id"/> exists, the one being added will replace the other.
         /// </summary>
         /// <typeparam name="T">A subtype of <see cref="Formula"/>.</typeparam>
         /// <returns>Whether the addition is successful.</returns>
+        /// <seealso cref="AddFormula(Type)"/>
         public static bool AddFormula<T>() where T : Formula => AddFormula(typeof(T));
 
-        /// <summary>
-        /// Adds a formula, given the <see cref="Type"/> parameter.
-        /// </summary>
-        /// <param name="type">A <see cref="Type"/> representing the subtype of <see cref="Formula"/>.</param>
-        /// <returns>Whether the addition is successful.</returns>
+        /// <inheritdoc cref="AddFormula{T}"/>
+        /// <seealso cref="AddFormula{T}"/>
         public static bool AddFormula(Type type)
         {
             try
@@ -196,6 +214,7 @@ namespace BattleRegen
                     if (constructor != null)
                     {
                         Formula formula = constructor.Invoke(Array.Empty<object>()) as Formula;
+                        formulas.RemoveAll(x => x.Id == formula.Id); // remove old version before adding new version
                         formulas.Add(formula);
                         return true;
                     }

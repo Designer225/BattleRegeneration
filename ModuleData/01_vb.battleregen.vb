@@ -15,9 +15,9 @@ Namespace BattleRegen.Formulas
         ' Built-in values must be loaded first. Sine should be right behind EveOnline.
         Public Overrides ReadOnly Property Priority As Integer = Integer.MinValue
 
-        Public Overrides Function Calculate(agent As Agent, regenRate As Double, regenTime As Double) As Double
-            Dim ratio As Double = agent.Health / agent.HealthLimit
-            Return 2.5 * regenRate * Math.Sin(Math.PI / 2 * ratio)
+        Public Overrides Function Calculate(data As RegenDataInfo) As Double
+            Dim ratio As Double = data.Agent.Health / data.Agent.HealthLimit
+            Return 2.5 * data.RegenRate * Math.Sin(Math.PI / 2 * ratio)
         End Function
     End Class
 End Namespace

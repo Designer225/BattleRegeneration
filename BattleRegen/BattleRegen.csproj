@@ -109,6 +109,7 @@
     </Reference>
     <Reference Include="SandBox">
       <HintPath>..\..\SandBox\bin\Win64_Shipping_Client\SandBox.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Serilog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
       <HintPath>packages\Serilog.2.8.0\lib\net46\Serilog.dll</HintPath>
@@ -142,6 +143,7 @@
     <Reference Include="System.Runtime.Serialization">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Threading.Thread" />
     <Reference Include="System.Xml.Linq">
       <Private>False</Private>
@@ -201,6 +203,7 @@
     <Compile Include="BattleRegenSettings.cs" />
     <Compile Include="BattleRegenSettings.Localisation.cs" />
     <Compile Include="Formula.cs" />
+    <Compile Include="RegenDataInfo.cs" />
     <Compile Include="SubModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

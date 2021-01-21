@@ -3,8 +3,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -21,12 +19,14 @@ namespace BattleRegen
         private readonly IBattleRegenSettings settings;
         private readonly Mission mission;
         private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
+        private readonly SynchronizedCollection<Tuple<Agent, float>> agentHpPairs;
 
         public BattleRegeneration(Mission mission)
         {
             settings = BattleRegenSettingsUtil.Instance;
             this.mission = mission;
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
+            agentHpPairs = new SynchronizedCollection<Tuple<Agent, float>>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
             Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
@@ -44,7 +44,7 @@ namespace BattleRegen
         {
             base.OnMissionTick(dt);
 
-            if (mission.MissionEnded() || mission.CombatType == Mission.MissionCombatType.NoCombat || mission.IsMissionEnding)
+            if (mission.MissionEnded() || mission.IsMissionEnding)
                 return;
             else
             {
@@ -55,6 +55,15 @@ namespace BattleRegen
             // Multi-threading work mk3
             Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
             List<Task> tasks = new List<Task>();
+
+            foreach (Agent agent in agents)
+            {
+                lock (agentHpPairs.SyncRoot)
+                {
+                    if (!agentHpPairs.Any(x => x.Item1 == agent))
+                        agentHpPairs.Add(new Tuple<Agent, float>(agent, agent.Health));
+                }
+            }
 
             while (agents.Count > 0)
             {
@@ -70,8 +79,11 @@ namespace BattleRegen
         {
             try
             {
-                if (agent.Health < agent.HealthLimit)
-                    AttemptRegenerateAgent(agent, dt);
+                float healthLimit;
+                lock(agentHpPairs.SyncRoot)
+                    healthLimit = agentHpPairs.FirstOrDefault(x => x.Item1 == agent)?.Item2 ?? agent.HealthLimit; // fallback
+                if (agent.Health > 0 && agent.Health < healthLimit)
+                    AttemptRegenerateAgent(agent, healthLimit, dt);
             }
             catch (Exception e)
             {
@@ -102,17 +114,20 @@ namespace BattleRegen
                     Debug.Print($"[BattleRegeneration] An error occurred attempting to add XP to a hero.\n{e}");
                 }
             }
+
+            lock (agentHpPairs.SyncRoot)
+                agentHpPairs.Clear();
         }
 
-        private void AttemptRegenerateAgent(Agent agent, float dt)
+        private void AttemptRegenerateAgent(Agent agent, float healthLimit, float dt)
         {
             if (agent.Monster.FamilyType != HumanFamilyType)
             {
-                if (settings.ApplyToAnimal) Regenerate(agent, dt, agent.MountAgent?.Team);
+                if (settings.ApplyToAnimal) Regenerate(agent, healthLimit, dt, agent.MountAgent?.Team);
             }
             else if (agent.IsPlayerControlled)
             {
-                if (settings.ApplyToPlayer) Regenerate(agent, dt);
+                if (settings.ApplyToPlayer) Regenerate(agent, healthLimit, dt);
             }
             else
             {
@@ -121,81 +136,83 @@ namespace BattleRegen
                 {
                     if (agent.IsHero)
                     {
-                        if (settings.ApplyToEnemyHeroes) Regenerate(agent, dt);
+                        if (settings.ApplyToEnemyHeroes) Regenerate(agent, healthLimit, dt);
                     }
                     else
                     {
-                        if (settings.ApplyToEnemyTroops) Regenerate(agent, dt);
+                        if (settings.ApplyToEnemyTroops) Regenerate(agent, healthLimit, dt);
                     }
                 }
                 else if (team.IsPlayerTeam)
                 {
                     if (agent.IsHero)
                     {
-                        if (settings.ApplyToCompanions) Regenerate(agent, dt, team);
+                        if (settings.ApplyToCompanions) Regenerate(agent, healthLimit, dt, team);
                     }
                     else
                     {
-                        if (settings.ApplyToPartyTroops) Regenerate(agent, dt, team);
+                        if (settings.ApplyToPartyTroops) Regenerate(agent, healthLimit, dt, team);
                     }
                 }
                 else if (team.IsPlayerAlly)
                 {
                     if (agent.IsHero)
                     {
-                        if (settings.ApplyToAlliedHeroes) Regenerate(agent, dt, team);
+                        if (settings.ApplyToAlliedHeroes) Regenerate(agent, healthLimit, dt, team);
                     }
                     else
                     {
-                        if (settings.ApplyToAlliedTroops) Regenerate(agent, dt, team);
+                        if (settings.ApplyToAlliedTroops) Regenerate(agent, healthLimit, dt, team);
                     }
                 }
                 else
                 {
                     if (agent.IsHero)
                     {
-                        if (settings.ApplyToEnemyHeroes) Regenerate(agent, dt, team);
+                        if (settings.ApplyToEnemyHeroes) Regenerate(agent, healthLimit, dt, team);
                     }
                     else
                     {
-                        if (settings.ApplyToEnemyTroops) Regenerate(agent, dt, team);
+                        if (settings.ApplyToEnemyTroops) Regenerate(agent, healthLimit, dt, team);
                     }
                 }
             }
         }
 
-        private void Regenerate(Agent agent, float dt, Team agentTeam = null)
+        private void Regenerate(Agent agent, float healthLimit, float dt, Team agentTeam = null)
         {
 
             if (agentTeam == null) agentTeam = agent.Team;
 
-            if (agent.Health > 0f && agent.Health < agent.HealthLimit)
+            if (agent.Health > 0f && agent.Health < healthLimit)
             {
                 double modifier = GetHealthModifier(agent, agentTeam, out Healer healers);
-                double baseRegenRate = settings.RegenAmount / 100.0 * agent.HealthLimit;
-                double regenRate = ApplyRegenModel(agent, baseRegenRate, modifier);
+                double baseRegenRate = settings.RegenAmount / 100.0 * agent.HealthLimit; // regen rate is always based on all-time health limit
+                double regenRate = ApplyRegenModel(agent, healthLimit, baseRegenRate, modifier);
                 double regenAmount = regenRate * dt;
 
-                if (agent.Health + regenAmount >= agent.HealthLimit)
-                    agent.Health = agent.HealthLimit;
+                if (agent.Health + regenAmount >= healthLimit)
+                    agent.Health = healthLimit;
                 else
                     agent.Health += (float)regenAmount;
 
                 GiveXpToHealers(agent, agentTeam, healers, regenAmount);
                 if (settings.Debug)
-                    Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} health: {2}, health added: {3} (base: {4}, multiplier: {5}), dt: {6}",
-                        GetTroopType(agent, agentTeam), agent.Name, agent.Health, regenAmount, baseRegenRate * dt, modifier, dt));
+                    Debug.Print($"[BattleRegeneration] {GetTroopType(agent, agentTeam)} agent {agent.Name} health: {agent.Health}, health limit: {healthLimit}, " +
+                        $"health added: {regenAmount} (base: {baseRegenRate * dt}, multiplier: {modifier}), dt: {dt}");
             }
         }
 
-        private double ApplyRegenModel(Agent agent, double baseRegenRate, double modifier)
+        private double ApplyRegenModel(Agent agent, float healthLimit, double baseRegenRate, double modifier)
         {
             double regenRate = baseRegenRate * modifier;
-            double regenTime = agent.HealthLimit / regenRate;
+            double regenTime = healthLimit / regenRate;
+            double origRegenTime = agent.HealthLimit / regenRate;
 
             try
             {
-                regenRate = settings.RegenModel.Calculate(agent, regenRate, regenTime);
+                RegenDataInfo data = new RegenDataInfo(agent, healthLimit, regenRate, regenTime, origRegenTime);
+                regenRate = settings.RegenModel.Calculate(data);
             }
             catch (Exception e)
             {
@@ -262,7 +279,7 @@ namespace BattleRegen
 
         private void GiveXpToHealers(Agent agent, Team agentTeam, Healer healers, double regenAmount)
         {
-            double xpGain = regenAmount / agent.HealthLimit;
+            double xpGain = regenAmount / agent.HealthLimit; // xp gain is also based on all-time health limit
 
             if ((healers & Healer.General) == Healer.General && agentTeam.GeneralAgent.IsHero)
             {
@@ -299,6 +316,8 @@ namespace BattleRegen
 
             while (!heroXpGainPairs.IsEmpty)
                 heroXpGainPairs.TryDequeue(out _);
+            lock (agentHpPairs.SyncRoot)
+                agentHpPairs.Clear();
 
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }
