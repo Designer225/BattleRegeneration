@@ -81,7 +81,7 @@ namespace BattleRegen
         /// <param name="regenTime">The time it takes for the specified agent to be fully healed from zero.</param>
         /// <returns>The modified regeneration rate.</returns>
         /// <seealso cref="Calculate(RegenDataInfo)"/>
-        [Obsolete("Superseded by Calculate(Agent, float, double, double); override that method instead.")]
+        [Obsolete("Superseded by Calculate(RegenDataInfo); override that method instead.")]
         public virtual double Calculate(Agent agent, double regenRate, double regenTime)
         {
             return 0.0;
