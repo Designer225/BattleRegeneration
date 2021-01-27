@@ -146,10 +146,16 @@ namespace BattleRegen
 
             // Shamelessly copied from Custom Troop Upgrades because it's my mod
             if (!Modules.IsEmpty()) Modules.Clear();
-            Modules.AddRange(ModuleHelper.GetModules().Where(x => x.IsOfficial || x.IsSelected));
-            ModuleInfo self = Modules.Find(x => x.Id == "BattleRegeneration");
-            Modules.Remove(self);
-            Modules.Insert(0, self);
+            
+            string[] moduleNames = Utilities.GetModulesNames();
+            foreach (string moduleName in moduleNames)
+            {
+                ModuleInfo m = new ModuleInfo();
+                m.LoadWithFullPath(ModuleHelper.GetModuleFullPath(moduleName));
+
+                if (m.Id == "BattleRegeneration") Modules.Insert(0, m); // original mod should load first
+                else Modules.Add(m);
+            }
 
             formulas = new List<Formula>();
             // Set up compilers options
