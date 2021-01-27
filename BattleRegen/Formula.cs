@@ -11,6 +11,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using TaleWorlds.ModuleManager;
 using TaleWorlds.MountAndBlade;
 
 namespace BattleRegen
@@ -145,21 +146,15 @@ namespace BattleRegen
 
             // Shamelessly copied from Custom Troop Upgrades because it's my mod
             if (!Modules.IsEmpty()) Modules.Clear();
-
-            string[] moduleNames = Utilities.GetModulesNames();
-            foreach (string moduleName in moduleNames)
-            {
-                ModuleInfo m = new ModuleInfo();
-                m.Load(moduleName);
-
-                if (m.Id == "BattleRegeneration") Modules.Insert(0, m); // original mod should load first
-                else Modules.Add(m);
-            }
+            Modules.AddRange(ModuleHelper.GetModules().Where(x => x.IsOfficial || x.IsSelected));
+            ModuleInfo self = Modules.Find(x => x.Id == "BattleRegeneration");
+            Modules.Remove(self);
+            Modules.Insert(0, self);
 
             formulas = new List<Formula>();
             // Set up compilers options
-            ProviderOptions csOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
-            ProviderOptions vbOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Alias, "bin", "Win64_Shipping_Client", "roslyn", "vbc.exe"), 60);
+            ProviderOptions csOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Id, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
+            ProviderOptions vbOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Id, "bin", "Win64_Shipping_Client", "roslyn", "vbc.exe"), 60);
             CSharpCodeProvider csCodeProvider = new CSharpCodeProvider(csOptions);
             VBCodeProvider vbCodeProvider = new VBCodeProvider(vbOptions);
             CompilerParameters parameters = new CompilerParameters
@@ -179,7 +174,7 @@ namespace BattleRegen
 
             foreach (ModuleInfo module in Modules)
             {
-                DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Alias, "ModuleData"));
+                DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Id, "ModuleData"));
                 if (dataPath.Exists)
                 {
                     foreach (FileInfo csFile in dataPath.EnumerateFiles("*.battleregen.cs"))
