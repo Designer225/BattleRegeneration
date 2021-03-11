@@ -52,37 +52,35 @@ namespace BattleRegen
                 if (arenaController != default && arenaController.AfterPractice) return;
             }
 
-            // Multi-threading work mk3
-            Queue<Agent> agents = new Queue<Agent>(mission.AllAgents);
+            // Multi-threading work mk4
+            Queue<Agent> agents = new Queue<Agent>(mission.Agents);
             List<Task> tasks = new List<Task>();
-
-            foreach (Agent agent in agents)
-            {
-                lock (agentHpPairs.SyncRoot)
-                {
-                    if (!agentHpPairs.Any(x => x.Item1 == agent))
-                        agentHpPairs.Add(new Tuple<Agent, float>(agent, agent.Health));
-                }
-            }
 
             while (agents.Count > 0)
             {
                 Agent agent = agents.Dequeue();
-                tasks.Add(Task.Run(() => OnAction(agent, dt)));
+                Tuple<Agent, float> agentHpPair;
+                lock (agentHpPairs.SyncRoot)
+                {
+                    agentHpPair = agentHpPairs.FirstOrDefault(x => x.Item1 == agent);
+                    if (agentHpPair == default)
+                    {
+                        agentHpPair = new Tuple<Agent, float>(agent, agent.Health);
+                        agentHpPairs.Add(agentHpPair);
+                    }
+                }
+                tasks.Add(Task.Run(() => OnAction(agent, agentHpPair.Item2, dt)));
             }
 
             foreach (Task task in tasks)
                 task.Wait();
         }
 
-        private void OnAction(Agent agent, float dt)
+        private void OnAction(Agent agent, float healthLimit, float dt)
         {
             try
             {
-                float healthLimit;
-                lock(agentHpPairs.SyncRoot)
-                    healthLimit = agentHpPairs.FirstOrDefault(x => x.Item1 == agent)?.Item2 ?? agent.HealthLimit; // fallback
-                if (agent.Health > 0 && agent.Health < healthLimit)
+                if (agent.Health < healthLimit)
                     AttemptRegenerateAgent(agent, healthLimit, dt);
             }
             catch (Exception e)
