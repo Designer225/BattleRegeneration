@@ -224,6 +224,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BattleRegeneration.cs" />
+    <Compile Include="BattleRegenerationComponent.cs" />
     <Compile Include="BattleRegenSettings.cs" />
     <Compile Include="BattleRegenSettings.Localisation.cs" />
     <Compile Include="Formula.cs" />
