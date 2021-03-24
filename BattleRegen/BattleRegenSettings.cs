@@ -79,6 +79,20 @@ namespace BattleRegen
     {
         float RegenAmount { get; set; }
 
+        float RegenAmountCompanions { get; set; }
+
+        float RegenAmountAllies { get; set; }
+
+        float RegenAmountPartyTroops { get; set; }
+
+        float RegenAmountAlliedTroops { get; set; }
+
+        float RegenAmountEnemies { get; set; }
+
+        float RegenAmountEnemyTroops { get; set; }
+
+        float RegenAmountAnimals { get; set; }
+
         float MedicineBoost { get; set; }
 
         float CommanderMedicineBoost { get; set; }
@@ -89,21 +103,7 @@ namespace BattleRegen
 
         DropdownDefault<Formula> RegenModelDropdown { get; set; }
 
-        bool ApplyToPlayer { get; set; }
-
-        bool ApplyToCompanions { get; set; }
-
-        bool ApplyToAlliedHeroes { get; set; }
-
-        bool ApplyToPartyTroops { get; set; }
-
-        bool ApplyToAlliedTroops { get; set; }
-
-        bool ApplyToEnemyHeroes { get; set; }
-
-        bool ApplyToEnemyTroops { get; set; }
-
-        bool ApplyToAnimal { get; set; }
+        bool HealToFull { get; set; }
 
         bool Debug { get; set; }
 
@@ -116,6 +116,27 @@ namespace BattleRegen
     {
         [XmlElement(DataType = "float")]
         public float RegenAmount { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountCompanions { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountAllies { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountPartyTroops { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountAlliedTroops { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountEnemies { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountEnemyTroops { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountAnimals { get; set; } = 1f;
 
         [XmlElement(DataType = "float")]
         public float MedicineBoost { get; set; } = 50f;
@@ -136,31 +157,10 @@ namespace BattleRegen
         public string RegenModelString { get; set; } = "00_Linear"; // had to hard code this because of necessity
 
         [XmlElement(DataType = "boolean")]
-        public bool ApplyToPlayer { get; set; } = true;
+        public bool HealToFull { get; set; } = false;
 
         [XmlElement(DataType = "boolean")]
-        public bool ApplyToCompanions { get; set; } = true;
-
-        [XmlElement(DataType = "boolean")]
-        public bool ApplyToAlliedHeroes { get; set; } = true;
-        
-        [XmlElement(DataType = "boolean")]
-        public bool ApplyToPartyTroops { get; set; } = true;
-
-        [XmlElement(DataType = "boolean")]
-        public bool ApplyToAlliedTroops { get; set; } = true;
-
-        [XmlElement(DataType = "boolean")]
-        public bool ApplyToEnemyHeroes { get; set; } = true;
-
-        [XmlElement(DataType = "boolean")]
-        public bool ApplyToEnemyTroops { get; set; } = true;
-
-        [XmlElement(DataType = "boolean")]
-        public bool ApplyToAnimal { get; set; } = true;
-
-        [XmlElement(DataType = "boolean")]
-        public bool Debug { get; set; } = true;
+        public bool Debug { get; set; } = false;
 
         [XmlIgnore]
         public Formula RegenModel => RegenModelDropdown.Find(x => x.Id == RegenModelString); // also not serialized as this is supposed to return a value at runtime
@@ -182,59 +182,59 @@ namespace BattleRegen
         [SettingPropertyGroup(RegenValuesName, GroupOrder = 0)]
         public float RegenAmount { get; set; } = 1f;
 
-        [SettingPropertyFloatingInteger(MedicineBoostName, 0f, 200f, HintText = MedicineBoostHint, Order = 1, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(RegenAmountCompanionsName, 0f, 25f, HintText = RegenAmountHint, Order = 1, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountCompanions { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountAlliesName, 0f, 25f, HintText = RegenAmountHint, Order = 2, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountAllies { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountPartyTroopsName, 0f, 25f, HintText = RegenAmountHint, Order = 3, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountPartyTroops { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountAlliedTroopsName, 0f, 25f, HintText = RegenAmountHint, Order = 4, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountAlliedTroops { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountEnemiesName, 0f, 25f, HintText = RegenAmountHint, Order = 5, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountEnemies { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountEnemyTroopsName, 0f, 25f, HintText = RegenAmountHint, Order = 6, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountEnemyTroops { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountAnimalsName, 0f, 25f, HintText = RegenAmountHint, Order = 7, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountAnimals { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(MedicineBoostName, 0f, 200f, HintText = MedicineBoostHint, Order = 8, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
         public float MedicineBoost { get; set; } = 50f;
 
-        [SettingPropertyFloatingInteger(CommanderMedicineBoostName, 0f, 200f, HintText = CommanderMedicineBoostHint, Order = 2, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(CommanderMedicineBoostName, 0f, 200f, HintText = CommanderMedicineBoostHint, Order = 9, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
         public float CommanderMedicineBoost { get; set; } = 25f;
 
-        [SettingPropertyFloatingInteger(XpGainName, 0f, 100f, HintText = XpGainHint, Order = 3, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(XpGainName, 0f, 100f, HintText = XpGainHint, Order = 10, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
         public float XpGain { get; set; } = 5f;
 
-        [SettingPropertyFloatingInteger(CommanderXpGainName, 0f, 100f, HintText = CommanderXpGainHint, Order = 4, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(CommanderXpGainName, 0f, 100f, HintText = CommanderXpGainHint, Order = 11, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
         public float CommanderXpGain { get; set; } = 0.5f;
         #endregion
 
         #region Regeneration Settings
-        [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 5, RequireRestart = false)]
+        [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 12, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
         public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
 
-        [SettingPropertyBool(ApplyToPlayerName, HintText = ApplyToPlayerHint, Order = 6, RequireRestart = false)]
+        [SettingPropertyBool(HealToFullName, HintText = HealToFullHint, Order = 14, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToPlayer { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToCompanionsName, HintText = ApplyToCompanionsHint, Order = 7, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToCompanions { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToAlliedHeroesName, HintText = ApplyToAlliedHeroesHint, Order = 8, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToAlliedHeroes { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToPartyTroopsName, HintText = ApplyToPartyTroopsHint, Order = 9, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToPartyTroops { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToAlliedTroopsName, HintText = ApplyToAlliedTroopsHint, Order = 10, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToAlliedTroops { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToEnemyHeroesName, HintText = ApplyToEnemyHeroesHint, Order = 11, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToEnemyHeroes { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToEnemyTroopsName, HintText = ApplyToEnemyTroopsHint, Order = 12, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToEnemyTroops { get; set; } = true;
-
-        [SettingPropertyBool(ApplyToAnimalName, HintText = ApplyToAnimalHint, Order = 13, RequireRestart = false)]
-        [SettingPropertyGroup(RegenSettingsName)]
-        public bool ApplyToAnimal { get; set; } = true;
+        public bool HealToFull { get; set; } = false;
 
         [SettingPropertyBool(DebugName, HintText = DebugHint, Order = 14, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]

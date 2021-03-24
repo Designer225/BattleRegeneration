@@ -13,8 +13,6 @@ namespace BattleRegen
 {
     sealed class BattleRegeneration : MissionBehaviour
     {
-        private const int HumanFamilyType = 0;
-
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly IBattleRegenSettings settings;
         private readonly Mission mission;
@@ -27,15 +25,12 @@ namespace BattleRegen
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
-            Debug.Print("[BattleRegeneration] Debug mode on, dumping settings: "
-                + string.Format("regen amount in percent total HP: {0}, medicine boost: {1}, regen model: {2}, ",
-                    settings.RegenAmount, settings.MedicineBoost, settings.RegenModel)
-                + string.Format("commander medicine boost: {0}, xp gain: {1}, commander xp gain: {2}, ",
-                    settings.CommanderMedicineBoost, settings.XpGain, settings.CommanderXpGain)
-                + string.Format("regen: player? {0}, companions? {1}, allied heroes? {2}, party troops? {3}, ",
-                    settings.ApplyToPlayer, settings.ApplyToCompanions, settings.ApplyToAlliedHeroes, settings.ApplyToPartyTroops)
-                + string.Format("allied troops? {0}, enemy heroes? {1}, enemy troops? {2}, animals? {3}",
-                    settings.ApplyToAlliedTroops, settings.ApplyToEnemyHeroes, settings.ApplyToEnemyTroops, settings.ApplyToAnimal));
+            Debug.Print($"[BattleRegeneration] Debug mode on, dumping settings: " +
+                $"medicine boost: {settings.RegenAmount}, regen model: {settings.MedicineBoost}, commander medicine boost: {settings.CommanderMedicineBoost}, " +
+                $"xp gain: {settings.XpGain}, commander xp gain: {settings.CommanderXpGain}, " +
+                $"regen in percent HP: player:{settings.RegenAmount}, companions:{settings.RegenAmountCompanions}, allied heroes:{settings.RegenAmountAllies}, " +
+                $"party troops:{settings.RegenAmountPartyTroops}, allied troops:{settings.RegenAmountAlliedTroops}, enemy heroes:{settings.RegenAmountEnemies}, " +
+                $"enemy troops:{settings.RegenAmountEnemyTroops}, animals:{settings.RegenAmountAnimals}");
         }
 
         public override void OnAgentBuild(Agent agent, Banner banner)
