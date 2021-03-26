@@ -151,7 +151,7 @@ namespace BattleRegen
                 var options = CSharpParseOptions.Default.WithLanguageVersion(Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp7_3);
                 var syntaxTree = Microsoft.CodeAnalysis.CSharp.SyntaxFactory.ParseSyntaxTree(codestr, options);
                 return CSharpCompilation.Create(System.IO.Path.GetRandomFileName(), new[] { syntaxTree },
-                    GetReferences(), new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                    GetReferences(), new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
             }
         }
 
@@ -163,12 +163,43 @@ namespace BattleRegen
                 var options = VisualBasicParseOptions.Default.WithLanguageVersion(Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.VisualBasic16);
                 var syntaxTree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(codestr, options);
                 return VisualBasicCompilation.Create(System.IO.Path.GetRandomFileName(), new[] { syntaxTree },
-                    GetReferences(), new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                    GetReferences(), new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
             }
         }
 
         private static IEnumerable<MetadataReference> GetReferences()
         {
+            // test to see if this causes an issue
+            //try
+            //{
+            //    var locations = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty());
+            //    var resolver = new PathAssemblyResolver(locations);
+            //    using (var mlc = new MetadataLoadContext(resolver))
+            //    {
+            //        foreach (var location in locations)
+            //        {
+            //            Assembly assembly = mlc.LoadFromAssemblyPath(location);
+            //            AssemblyName name = assembly.GetName();
+
+            //            string output = $"[BattleRegen] Debug: {name.Name} has the following attributes:\n";
+            //            foreach (CustomAttributeData attr in assembly.GetCustomAttributesData())
+            //            {
+            //                try
+            //                {
+            //                    output += $"{attr.AttributeType}\n";
+            //                }
+            //                catch (FileNotFoundException)
+            //                {
+            //                }
+            //            }
+            //            Debug.Print(output);
+            //        }
+            //    }
+            //}
+            //catch (Exception e)
+            //{
+            //    Debug.Print($"[BattleRegen] Debug: An exception has occured attempting to obtain metadata. See above for possible cause.\n{e}");
+            //}
             return AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty())
                 .Select(x => MetadataReference.CreateFromFile(x));
         }
