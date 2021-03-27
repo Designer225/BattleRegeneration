@@ -128,7 +128,7 @@ namespace BattleRegen
                     Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} failed. See above for details.");
                     return;
                 }
-                else
+                else if (diagnostics.Any(x => x.Severity == DiagnosticSeverity.Warning))
                     Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} generated warnings. See above for details.");
                 Debug.Print($"[BattleRegen] {codeFile.FullName} compiled successfully.");
 
@@ -169,39 +169,25 @@ namespace BattleRegen
 
         private static IEnumerable<MetadataReference> GetReferences()
         {
-            // test to see if this causes an issue
-            //try
-            //{
-            //    var locations = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty());
-            //    var resolver = new PathAssemblyResolver(locations);
-            //    using (var mlc = new MetadataLoadContext(resolver))
-            //    {
-            //        foreach (var location in locations)
-            //        {
-            //            Assembly assembly = mlc.LoadFromAssemblyPath(location);
-            //            AssemblyName name = assembly.GetName();
+            var references = new Queue<MetadataReference>(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty())
+                .Select(x => MetadataReference.CreateFromFile(x)));
+            var usableRefs = new Stack<MetadataReference>();
 
-            //            string output = $"[BattleRegen] Debug: {name.Name} has the following attributes:\n";
-            //            foreach (CustomAttributeData attr in assembly.GetCustomAttributesData())
-            //            {
-            //                try
-            //                {
-            //                    output += $"{attr.AttributeType}\n";
-            //                }
-            //                catch (FileNotFoundException)
-            //                {
-            //                }
-            //            }
-            //            Debug.Print(output);
-            //        }
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    Debug.Print($"[BattleRegen] Debug: An exception has occured attempting to obtain metadata. See above for possible cause.\n{e}");
-            //}
-            return AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty())
-                .Select(x => MetadataReference.CreateFromFile(x));
+            // checks if compiler will function with the given references
+            while (references.Count > 0)
+            {
+                var reference = references.Dequeue();
+                usableRefs.Push(reference);
+                var compilation = CSharpCompilation.Create(System.IO.Path.GetRandomFileName(), new SyntaxTree[] { }, usableRefs,
+                    new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                if (compilation.GetDiagnostics().Any(x => x.Severity == DiagnosticSeverity.Error))
+                {
+                    Debug.Print($"[BattleRegen] Warning: Cannot add {reference.Display} as a reference. This might cause compiler errors.");
+                    usableRefs.Pop();
+                }
+            }
+
+            return usableRefs;
         }
 
         internal static List<Formula> InitializeFormulas()
