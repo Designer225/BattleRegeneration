@@ -25,7 +25,7 @@ namespace BattleRegen
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
-            Debug.Print($"[BattleRegeneration] Debug mode on, dumping settings: " +
+            Debug.Print($"[BattleRegeneration] Debug mode on, dumping settings: regen mode: {settings.RegenModel}, " +
                 $"medicine boost: {settings.RegenAmount}, regen model: {settings.MedicineBoost}, commander medicine boost: {settings.CommanderMedicineBoost}, " +
                 $"xp gain: {settings.XpGain}, commander xp gain: {settings.CommanderXpGain}, " +
                 $"regen in percent HP: player:{settings.RegenAmount}, companions:{settings.RegenAmountCompanions}, allied heroes:{settings.RegenAmountAllies}, " +

@@ -1,8 +1,10 @@
 ﻿using HarmonyLib;
 using MCM.Abstractions.Dropdown;
-using Microsoft.CodeDom.Providers.DotNetCompilerPlatform;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.VisualBasic;
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,6 +28,8 @@ namespace BattleRegen
         private static readonly string ModulesPath = System.IO.Path.Combine(BasePath.Name, "Modules");
 
         private static List<ModuleInfo> Modules { get; } = new List<ModuleInfo>();
+
+        private static readonly HashSet<string> loadedFiles = new HashSet<string>();
 
         private static List<Formula> formulas = InitializeFormulas();
 
@@ -99,51 +103,95 @@ namespace BattleRegen
             return comparison == 0 ? Id.CompareTo(other.Id) : comparison;
         }
 
+        #region internal methods
         internal static DropdownDefault<Formula> GetFormulas()
         {
             return new DropdownDefault<Formula>(formulas, 0);
         }
 
-        private static void CompileCode(CodeDomProvider codeProvider, CompilerParameters parameters, FileInfo codeFile)
+        [CommandLineFunctionality.CommandLineArgumentFunction("list_scripts", "battleregen")]
+        internal static string ListScripts(List<string> strings)
         {
-            try
+            return loadedFiles.Join(delimiter: "\n");
+        }
+
+        private static void CompileCode(FileInfo codeFile, Func<FileInfo, Compilation> function)
+        {
+            using (var stream = new MemoryStream())
             {
-                CompilerResults results = codeProvider.CompileAssemblyFromFile(parameters, codeFile.FullName);
+                var results = function(codeFile).Emit(stream);
+                var diagnostics = results.Diagnostics;
+                diagnostics.Do(x => Debug.Print($"[BattleRegen] {x}"));
 
-                if (results.Errors.Count > 0)
+                if (diagnostics.Any(x => x.Severity == DiagnosticSeverity.Error || x.IsWarningAsError))
                 {
-                    foreach (CompilerError error in results.Errors)
-                        Debug.Print($"[BattleRegen] {error}");
-
-                    if (!results.Errors.HasErrors)
-                        Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} generated warnings. See above for details.");
-                    else
-                    {
-                        Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} failed. See above for details.");
-                        return;
-                    }
+                    Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} failed. See above for details.");
+                    return;
                 }
+                else if (diagnostics.Any(x => x.Severity == DiagnosticSeverity.Warning))
+                    Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} generated warnings. See above for details.");
                 Debug.Print($"[BattleRegen] {codeFile.FullName} compiled successfully.");
 
-                Assembly compiledCode = results.CompiledAssembly;
-                var types = compiledCode.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
+                stream.Seek(0, SeekOrigin.Begin);
+                var assembly = Assembly.Load(stream.ToArray());
+                loadedFiles.Add(codeFile.FullName);
+                var types = assembly.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
 
                 if (types.IsEmpty())
                     Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {codeFile.FullName}.");
                 else types.Do(x => AddFormula(x));
             }
-            catch (Exception e)
+        }
+
+        private static Compilation GenerateCSharpCode(FileInfo codeFile)
+        {
+            using (var stream = codeFile.OpenRead())
             {
-                string error = $"[BattleRegen] Failed to load file {codeFile.FullName}\n\nError: {e}";
-                Debug.Print(error);
-                InformationManager.DisplayMessage(new InformationMessage(error));
+                var codestr = SourceText.From(stream);
+                var options = CSharpParseOptions.Default.WithLanguageVersion(Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp7_3);
+                var syntaxTree = Microsoft.CodeAnalysis.CSharp.SyntaxFactory.ParseSyntaxTree(codestr, options);
+                return CSharpCompilation.Create(System.IO.Path.GetRandomFileName(), new[] { syntaxTree },
+                    GetReferences(), new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
             }
+        }
+
+        private static Compilation GenerateVisualBasicCode(FileInfo codeFile)
+        {
+            using (var stream = codeFile.OpenRead())
+            {
+                var codestr = SourceText.From(stream);
+                var options = VisualBasicParseOptions.Default.WithLanguageVersion(Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.VisualBasic16);
+                var syntaxTree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(codestr, options);
+                return VisualBasicCompilation.Create(System.IO.Path.GetRandomFileName(), new[] { syntaxTree },
+                    GetReferences(), new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
+            }
+        }
+
+        private static IEnumerable<MetadataReference> GetReferences()
+        {
+            var references = new Queue<MetadataReference>(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty())
+                .Select(x => MetadataReference.CreateFromFile(x)));
+            var usableRefs = new Stack<MetadataReference>();
+
+            // checks if compiler will function with the given references
+            while (references.Count > 0)
+            {
+                var reference = references.Dequeue();
+                usableRefs.Push(reference);
+                var compilation = CSharpCompilation.Create(System.IO.Path.GetRandomFileName(), new SyntaxTree[] { }, usableRefs,
+                    new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                if (compilation.GetDiagnostics().Any(x => x.Severity == DiagnosticSeverity.Error))
+                {
+                    Debug.Print($"[BattleRegen] Warning: Cannot add {reference.Display} as a reference. This might cause compiler errors.");
+                    usableRefs.Pop();
+                }
+            }
+
+            return usableRefs;
         }
 
         internal static List<Formula> InitializeFormulas()
         {
-            Debug.Print("[BattleRegen] Compiling all formulas. This could take a while.");
-
             // Shamelessly copied from Custom Troop Upgrades because it's my mod
             if (!Modules.IsEmpty()) Modules.Clear();
             
@@ -158,41 +206,40 @@ namespace BattleRegen
             }
 
             formulas = new List<Formula>();
-            // Set up compilers options
-            ProviderOptions csOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Id, "bin", "Win64_Shipping_Client", "roslyn", "csc.exe"), 60);
-            ProviderOptions vbOptions = new ProviderOptions(System.IO.Path.Combine(ModulesPath, Modules[0].Id, "bin", "Win64_Shipping_Client", "roslyn", "vbc.exe"), 60);
-            CSharpCodeProvider csCodeProvider = new CSharpCodeProvider(csOptions);
-            VBCodeProvider vbCodeProvider = new VBCodeProvider(vbOptions);
-            CompilerParameters parameters = new CompilerParameters
-            {
-                GenerateExecutable = false,
-                GenerateInMemory = true
-            };
-            try
-            {
-                parameters.ReferencedAssemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic)
-                    .Select(x => x.Location).Where(x => !x.IsEmpty()).ToArray());
-            }
-            catch (Exception e)
-            {
-                Debug.Print($"[BattleRegen] Failed to add all required assemblies.\n\n{e}");
-            }
+            CompileScripts("battleregen.cs", GenerateCSharpCode);
+            CompileScripts("battleregen.vb", GenerateVisualBasicCode);
+            return formulas;
+        }
+        #endregion
 
-            foreach (ModuleInfo module in Modules)
+        /// <summary>
+        /// Compiles scripts from source files with a given extension and the compilation function. If a directory is specified, source files
+        /// from said directory will be compiled. Otherwise, source files from ModuleData folders of all modules will be loaded.
+        /// </summary>
+        /// <param name="extension">The extension of source files.</param>
+        /// <param name="function">The function used to compile source files.</param>
+        /// <param name="sourcePath">Directory of source files. If specified, source files from the directory will be compiled. Otherwise,
+        /// source files from ModuleData folders of all modules will be loaded.</param>
+        public static void CompileScripts(string extension, Func<FileInfo, Compilation> function, DirectoryInfo sourcePath = default)
+        {
+            Debug.Print($"[BattleRegen] Compiling formulas from source files of extension '{extension}'. This could take a while.");
+            if (sourcePath != default && sourcePath.Exists)
             {
-                DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Id, "ModuleData"));
-                if (dataPath.Exists)
+                Debug.Print($"[BattleRegen] Loading source files from {sourcePath.FullName}");
+                sourcePath.EnumerateFiles($"*.{extension}").Where(x => !loadedFiles.Contains(x.FullName)).Do(x => CompileCode(x, function));
+            }
+            else
+            {
+                Debug.Print("[BattleRegen] Loading source files from the ModuleData folders (if available) of all modules");
+                foreach (ModuleInfo module in Modules)
                 {
-                    foreach (FileInfo csFile in dataPath.EnumerateFiles("*.battleregen.cs"))
-                        CompileCode(csCodeProvider, parameters, csFile);
-                    foreach (FileInfo vbFile in dataPath.EnumerateFiles("*.battleregen.vb"))
-                        CompileCode(vbCodeProvider, parameters, vbFile);
+                    DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Id, "ModuleData"));
+                    if (dataPath.Exists)
+                        dataPath.EnumerateFiles($"*.{extension}").Where(x => !loadedFiles.Contains(x.FullName)).Do(x => CompileCode(x, function));
                 }
             }
-
             formulas.Sort();
-            Debug.Print("[BattleRegen] Loaded all installed regeneration formulas. See mod entry in MCM for details.");
-            return formulas;
+            Debug.Print($"[BattleRegen] Loaded regeneration formulas from source files of extension '{extension}'. See mod entry in MCM for details.");
         }
 
         /// <summary>
