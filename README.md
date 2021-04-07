@@ -4,4 +4,4 @@
 ## Credits
  * Aragas - Mod Configuration Manager (https://github.com/Aragas/Bannerlord.MBOptionScreen)
  * Andreas Pardeike - Harmony Patch Library (https://github.com/pardeike/Harmony)
- * Microsoft ASP.NET team - Roslyn CodeDOM Provider (https://github.com/aspnet/RoslynCodeDomProvider)
+ * Microsoft .NET Team - .NET Compiler Platform/Roslyn (https://github.com/dotnet/roslyn)
