@@ -34,7 +34,7 @@ namespace BattleRegen
             OnTickAsAI(dt);
         }
 
-        protected override void OnTickAsAI(float dt)
+        public override void OnTickAsAI(float dt)
         {
             if (Agent.Health <= 0 || Agent.Health >= healthLimit) return;
             if (mission.MissionEnded() || mission.IsMissionEnding)
