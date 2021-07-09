@@ -21,118 +21,101 @@ namespace BattleRegen
         private readonly Mission mission;
         private readonly BattleRegeneration behavior;
 
-        private bool agentActive;
-        private readonly AutoResetEvent mutex;
-
         public BattleRegenerationComponent(Agent agent, Mission mission, BattleRegeneration behavior) : base(agent)
         {
             settings = BattleRegenSettingsUtil.Instance;
             healthLimit = settings.HealToFull ? agent.HealthLimit : agent.Health;
             this.mission = mission;
             this.behavior = behavior;
-
-            agentActive = true;
-            mutex = new AutoResetEvent(false);
-            Task.Run(TaskTick);
         }
 
-        private void TaskTick()
+        public async override void OnTickAsAI(float dt)
         {
-            mutex.WaitOne();
-            while (agentActive)
+            if (mission.MissionEnded() || mission.IsMissionEnding)
+                return;
+            else
             {
-                OnTick(behavior.CurrentTickDT);
-                mutex.WaitOne();
+                var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
+                if (arenaController != default && arenaController.AfterPractice) return;
             }
-            mutex.Dispose();
-        }
 
-        internal void OnTick(float dt)
-        {
             if (Agent.Health <= 0 || Agent.Health >= healthLimit) return;
 
-            try
-            {
-                AttemptRegeneration(dt);
-            }
-            catch (Exception e)
-            {
-                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
-            }
-        }
-
-        public void Tick()
-        {
-            if (agentActive)
-                mutex.Set();
-        }
-
-        public void Deactivate()
-        {
-            if (agentActive)
-            {
-                agentActive = false;
-                mutex.Set();
-            }
+            //try
+            //{
+            //    Task.Run(() => AttemptRegeneration(dt));
+            //}
+            //catch (Exception e)
+            //{
+            //    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
+            //}
+            await Task.Run(() => AttemptRegeneration(dt));
         }
 
         private void AttemptRegeneration(float dt)
         {
-            if (Agent.Monster.FamilyType != HumanFamilyType)
+            try
             {
-                Regenerate(settings.RegenAmountAnimals, dt, Agent.MountAgent?.Team);
-            }
-            else if (Agent.IsPlayerControlled)
-            {
-                Regenerate(settings.RegenAmount, dt);
-            }
-            else
-            {
-                Team team = Agent.Team;
-                if (team == null)
+                if (Agent.Monster.FamilyType != HumanFamilyType)
                 {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountEnemies, dt);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountEnemyTroops, dt);
-                    }
+                    Regenerate(settings.RegenAmountAnimals, dt, Agent.MountAgent?.Team);
                 }
-                else if (team.IsPlayerTeam)
+                else if (Agent.IsPlayerControlled)
                 {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountCompanions, dt, team);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountPartyTroops, dt, team);
-                    }
-                }
-                else if (team.IsPlayerAlly)
-                {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountAllies, dt, team);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountAlliedTroops, dt, team);
-                    }
+                    Regenerate(settings.RegenAmount, dt);
                 }
                 else
                 {
-                    if (Agent.IsHero)
+                    Team team = Agent.Team;
+                    if (team == null)
                     {
-                        Regenerate(settings.RegenAmountEnemies, dt, team);
+                        if (Agent.IsHero)
+                        {
+                            Regenerate(settings.RegenAmountEnemies, dt);
+                        }
+                        else
+                        {
+                            Regenerate(settings.RegenAmountEnemyTroops, dt);
+                        }
+                    }
+                    else if (team.IsPlayerTeam)
+                    {
+                        if (Agent.IsHero)
+                        {
+                            Regenerate(settings.RegenAmountCompanions, dt, team);
+                        }
+                        else
+                        {
+                            Regenerate(settings.RegenAmountPartyTroops, dt, team);
+                        }
+                    }
+                    else if (team.IsPlayerAlly)
+                    {
+                        if (Agent.IsHero)
+                        {
+                            Regenerate(settings.RegenAmountAllies, dt, team);
+                        }
+                        else
+                        {
+                            Regenerate(settings.RegenAmountAlliedTroops, dt, team);
+                        }
                     }
                     else
                     {
-                        Regenerate(settings.RegenAmountEnemyTroops, dt, team);
+                        if (Agent.IsHero)
+                        {
+                            Regenerate(settings.RegenAmountEnemies, dt, team);
+                        }
+                        else
+                        {
+                            Regenerate(settings.RegenAmountEnemyTroops, dt, team);
+                        }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
             }
         }
 

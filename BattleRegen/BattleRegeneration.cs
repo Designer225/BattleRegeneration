@@ -17,8 +17,6 @@ namespace BattleRegen
         private readonly IBattleRegenSettings settings;
         private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
 
-        internal float CurrentTickDT { get; private set; }
-
         public BattleRegeneration()
         {
             settings = BattleRegenSettingsUtil.Instance;
@@ -46,34 +44,17 @@ namespace BattleRegen
         public override void OnAgentDeleted(Agent affectedAgent)
         {
             BattleRegenerationComponent component = affectedAgent.GetComponent<BattleRegenerationComponent>();
-            if (component != default)
-            {
-                component.Deactivate();
-                affectedAgent.RemoveComponent(component);
-            }
+            if (component != default) affectedAgent.RemoveComponent(component);
         }
 
         public override void OnMissionTick(float dt)
         {
-            if (Mission.MissionEnded() || Mission.IsMissionEnding)
-                return;
-            else
-            {
-                var arenaController = Mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
-                if (arenaController != default && arenaController.AfterPractice) return;
-            }
-
-            CurrentTickDT = dt;
-            foreach (var comp in Mission.Agents.Select(x => x.GetComponent<BattleRegenerationComponent>()))
-                comp?.Tick();
+            Mission.MainAgent?.GetComponent<BattleRegenerationComponent>()?.OnTickAsAI(dt);
         }
 
         protected override void OnEndMission()
         {
             base.OnEndMission();
-
-            foreach (var comp in Mission.Agents.Select(x => x.GetComponent<BattleRegenerationComponent>()))
-                comp?.Deactivate();
 
             while (!heroXpGainPairs.IsEmpty)
             {
@@ -132,9 +113,6 @@ namespace BattleRegen
         public override void OnMissionRestart()
         {
             base.OnMissionRestart();
-
-            foreach (var comp in Mission.Agents.Select(x => x.GetComponent<BattleRegenerationComponent>()))
-                comp?.Deactivate();
 
             while (!heroXpGainPairs.IsEmpty)
                 heroXpGainPairs.TryDequeue(out _);
