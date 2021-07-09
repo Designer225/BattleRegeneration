@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -20,30 +21,35 @@ namespace BattleRegen
         private readonly Mission mission;
         private readonly BattleRegeneration behavior;
 
+        private bool agentActive;
+        private readonly AutoResetEvent mutex;
+
         public BattleRegenerationComponent(Agent agent, Mission mission, BattleRegeneration behavior) : base(agent)
         {
             settings = BattleRegenSettingsUtil.Instance;
             healthLimit = settings.HealToFull ? agent.HealthLimit : agent.Health;
             this.mission = mission;
             this.behavior = behavior;
+
+            agentActive = true;
+            mutex = new AutoResetEvent(false);
+            Task.Run(TaskTick);
         }
 
-        // reminder to call this method manually through BattleRegeneration for player character
+        private void TaskTick()
+        {
+            mutex.WaitOne();
+            while (agentActive)
+            {
+                OnTick(behavior.CurrentTickDT);
+                mutex.WaitOne();
+            }
+            mutex.Dispose();
+        }
+
         internal void OnTick(float dt)
         {
-            OnTickAsAI(dt);
-        }
-
-        public override void OnTickAsAI(float dt)
-        {
             if (Agent.Health <= 0 || Agent.Health >= healthLimit) return;
-            if (mission.MissionEnded() || mission.IsMissionEnding)
-                return;
-            else
-            {
-                var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
-                if (arenaController != default && arenaController.AfterPractice) return;
-            }
 
             try
             {
@@ -52,6 +58,21 @@ namespace BattleRegen
             catch (Exception e)
             {
                 Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
+            }
+        }
+
+        public void Tick()
+        {
+            if (agentActive)
+                mutex.Set();
+        }
+
+        public void Deactivate()
+        {
+            if (agentActive)
+            {
+                agentActive = false;
+                mutex.Set();
             }
         }
 

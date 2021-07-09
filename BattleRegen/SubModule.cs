@@ -25,7 +25,7 @@ namespace BattleRegen
         public override void OnMissionBehaviourInitialize(Mission mission)
         {
             base.OnMissionBehaviourInitialize(mission);
-            mission.AddMissionBehaviour(new BattleRegeneration(mission));
+            mission.AddMissionBehaviour(new BattleRegeneration());
         }
     }
 

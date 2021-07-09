@@ -15,13 +15,13 @@ namespace BattleRegen
     {
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly IBattleRegenSettings settings;
-        private readonly Mission mission;
         private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
 
-        public BattleRegeneration(Mission mission)
+        internal float CurrentTickDT { get; private set; }
+
+        public BattleRegeneration()
         {
             settings = BattleRegenSettingsUtil.Instance;
-            this.mission = mission;
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
@@ -35,7 +35,7 @@ namespace BattleRegen
 
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
-            agent.AddComponent(new BattleRegenerationComponent(agent, mission, this));
+            agent.AddComponent(new BattleRegenerationComponent(agent, Mission, this));
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow blow)
@@ -47,48 +47,33 @@ namespace BattleRegen
         {
             BattleRegenerationComponent component = affectedAgent.GetComponent<BattleRegenerationComponent>();
             if (component != default)
+            {
+                component.Deactivate();
                 affectedAgent.RemoveComponent(component);
+            }
         }
 
         public override void OnMissionTick(float dt)
         {
-            //if (mission.MissionEnded() || mission.IsMissionEnding)
-            //    return;
-            //else
-            //{
-            //    var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
-            //    if (arenaController != default && arenaController.AfterPractice) return;
-            //}
+            if (Mission.MissionEnded() || Mission.IsMissionEnding)
+                return;
+            else
+            {
+                var arenaController = Mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
+                if (arenaController != default && arenaController.AfterPractice) return;
+            }
 
-            //// Multi-threading work mk4
-            //Queue<Agent> agents = new Queue<Agent>(mission.Agents);
-            //List<Task> tasks = new List<Task>();
-
-            //while (agents.Count > 0)
-            //{
-            //    Agent agent = agents.Dequeue();
-            //    Tuple<Agent, float> agentHpPair;
-            //    lock (agentHpPairs.SyncRoot)
-            //    {
-            //        agentHpPair = agentHpPairs.FirstOrDefault(x => x.Item1 == agent);
-            //        if (agentHpPair == default)
-            //        {
-            //            agentHpPair = new Tuple<Agent, float>(agent, agent.Health);
-            //            agentHpPairs.Add(agentHpPair);
-            //        }
-            //    }
-            //    tasks.Add(Task.Run(() => OnAction(agent, agentHpPair.Item2, dt)));
-            //}
-
-            //foreach (Task task in tasks)
-            //    task.Wait();
-
-            mission.MainAgent?.GetComponent<BattleRegenerationComponent>()?.OnTick(dt);
+            CurrentTickDT = dt;
+            foreach (var comp in Mission.Agents.Select(x => x.GetComponent<BattleRegenerationComponent>()))
+                comp?.Tick();
         }
 
         protected override void OnEndMission()
         {
             base.OnEndMission();
+
+            foreach (var comp in Mission.Agents.Select(x => x.GetComponent<BattleRegenerationComponent>()))
+                comp?.Deactivate();
 
             while (!heroXpGainPairs.IsEmpty)
             {
@@ -147,6 +132,9 @@ namespace BattleRegen
         public override void OnMissionRestart()
         {
             base.OnMissionRestart();
+
+            foreach (var comp in Mission.Agents.Select(x => x.GetComponent<BattleRegenerationComponent>()))
+                comp?.Deactivate();
 
             while (!heroXpGainPairs.IsEmpty)
                 heroXpGainPairs.TryDequeue(out _);
