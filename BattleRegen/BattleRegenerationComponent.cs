@@ -31,6 +31,11 @@ namespace BattleRegen
 
         public async override void OnTickAsAI(float dt)
         {
+            await Task.Run(() => AttemptRegeneration(dt)).ConfigureAwait(false);
+        }
+
+        private void AttemptRegeneration(float dt)
+        {
             if (mission.MissionEnded() || mission.IsMissionEnding)
                 return;
             else
@@ -41,19 +46,6 @@ namespace BattleRegen
 
             if (Agent.Health <= 0 || Agent.Health >= healthLimit) return;
 
-            //try
-            //{
-            //    Task.Run(() => AttemptRegeneration(dt));
-            //}
-            //catch (Exception e)
-            //{
-            //    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
-            //}
-            await Task.Run(() => AttemptRegeneration(dt));
-        }
-
-        private void AttemptRegeneration(float dt)
-        {
             try
             {
                 if (Agent.Monster.FamilyType != HumanFamilyType)
@@ -125,7 +117,7 @@ namespace BattleRegen
 
             if (Agent.Health > 0f && Agent.Health < healthLimit)
             {
-                double modifier = GetHealthModifier(agentTeam, out Healer healers);
+                var (modifier, healers) = GetHealthModifier(agentTeam);
                 double baseRegenRate = ratePercent / 100.0 * Agent.HealthLimit; // regen rate is always based on all-time health limit
                 double regenRate = ApplyRegenModel(baseRegenRate, modifier);
                 double regenAmount = regenRate * dt;
@@ -162,9 +154,9 @@ namespace BattleRegen
             return regenRate;
         }
 
-        private double GetHealthModifier(Team agentTeam, out Healer healers)
+        private (double, Healer) GetHealthModifier(Team agentTeam)
         {
-            healers = 0;
+            Healer healers = 0;
             double modifier = 1.0;
             double percentMedBoost = settings.MedicineBoost / 100.0;
 
@@ -187,7 +179,7 @@ namespace BattleRegen
             if (settings.Debug)
                 Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} is receiving a {2} multiplier in health regeneration",
                     GetTroopType(agentTeam), Agent.Name, modifier));
-            return modifier;
+            return (modifier, healers);
         }
 
         private string GetTroopType(Team agentTeam)
