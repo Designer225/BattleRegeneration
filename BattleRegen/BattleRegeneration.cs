@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
@@ -45,6 +46,13 @@ namespace BattleRegen
         {
             BattleRegenerationComponent component = affectedAgent.GetComponent<BattleRegenerationComponent>();
             if (component != default) affectedAgent.RemoveComponent(component);
+        }
+
+        public override void OnRegisterBlow(Agent attacker, Agent victim, GameEntity realHitEntity, Blow b, ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon)
+        {
+            attacker.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            attacker.MountAgent?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            victim.GetComponent<BattleRegenerationComponent>()?.TickHeal();
         }
 
         public override void OnMissionTick(float dt)
