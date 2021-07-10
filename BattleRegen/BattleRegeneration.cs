@@ -50,9 +50,9 @@ namespace BattleRegen
 
         public override void OnRegisterBlow(Agent attacker, Agent victim, GameEntity realHitEntity, Blow b, ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon)
         {
-            attacker.GetComponent<BattleRegenerationComponent>()?.TickHeal();
-            attacker.MountAgent?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
-            victim.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            attacker?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            attacker?.MountAgent?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            victim?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
         }
 
         public override void OnMissionTick(float dt)
