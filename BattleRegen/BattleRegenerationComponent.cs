@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -20,23 +21,27 @@ namespace BattleRegen
         private readonly Mission mission;
         private readonly BattleRegeneration behavior;
 
+        private bool healAgent;
+
         public BattleRegenerationComponent(Agent agent, Mission mission, BattleRegeneration behavior) : base(agent)
         {
             settings = BattleRegenSettingsUtil.Instance;
             healthLimit = settings.HealToFull ? agent.HealthLimit : agent.Health;
             this.mission = mission;
             this.behavior = behavior;
+
+            healAgent = false;
         }
 
-        // reminder to call this method manually through BattleRegeneration for player character
-        internal void OnTick(float dt)
+        internal void TickHeal() => healAgent = true;
+
+        public async override void OnTickAsAI(float dt)
         {
-            OnTickAsAI(dt);
+            if (healAgent) await Task.Run(() => AttemptRegeneration(dt)).ConfigureAwait(false);
         }
 
-        public override void OnTickAsAI(float dt)
+        private void AttemptRegeneration(float dt)
         {
-            if (Agent.Health <= 0 || Agent.Health >= healthLimit) return;
             if (mission.MissionEnded() || mission.IsMissionEnding)
                 return;
             else
@@ -45,74 +50,50 @@ namespace BattleRegen
                 if (arenaController != default && arenaController.AfterPractice) return;
             }
 
-            try
+            if (Agent.Health > 0 && Agent.Health < healthLimit)
             {
-                AttemptRegeneration(dt);
+                try
+                {
+                    if (Agent.Monster.FamilyType != HumanFamilyType)
+                    {
+                        Regenerate(settings.RegenAmountAnimals, dt, Agent.MountAgent?.Team);
+                    }
+                    else if (Agent.IsPlayerControlled)
+                    {
+                        Regenerate(settings.RegenAmount, dt);
+                    }
+                    else
+                    {
+                        Team team = Agent.Team;
+                        if (team == null)
+                        {
+                            if (Agent.IsHero) Regenerate(settings.RegenAmountEnemies, dt);
+                            else Regenerate(settings.RegenAmountEnemyTroops, dt);
+                        }
+                        else if (team.IsPlayerTeam)
+                        {
+                            if (Agent.IsHero) Regenerate(settings.RegenAmountCompanions, dt, team);
+                            else Regenerate(settings.RegenAmountPartyTroops, dt, team);
+                        }
+                        else if (team.IsPlayerAlly)
+                        {
+                            if (Agent.IsHero) Regenerate(settings.RegenAmountAllies, dt, team);
+                            else Regenerate(settings.RegenAmountAlliedTroops, dt, team);
+                        }
+                        else
+                        {
+                            if (Agent.IsHero) Regenerate(settings.RegenAmountEnemies, dt, team);
+                            else Regenerate(settings.RegenAmountEnemyTroops, dt, team);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
+                }
             }
-            catch (Exception e)
-            {
-                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
-            }
-        }
 
-        private void AttemptRegeneration(float dt)
-        {
-            if (Agent.Monster.FamilyType != HumanFamilyType)
-            {
-                Regenerate(settings.RegenAmountAnimals, dt, Agent.MountAgent?.Team);
-            }
-            else if (Agent.IsPlayerControlled)
-            {
-                Regenerate(settings.RegenAmount, dt);
-            }
-            else
-            {
-                Team team = Agent.Team;
-                if (team == null)
-                {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountEnemies, dt);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountEnemyTroops, dt);
-                    }
-                }
-                else if (team.IsPlayerTeam)
-                {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountCompanions, dt, team);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountPartyTroops, dt, team);
-                    }
-                }
-                else if (team.IsPlayerAlly)
-                {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountAllies, dt, team);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountAlliedTroops, dt, team);
-                    }
-                }
-                else
-                {
-                    if (Agent.IsHero)
-                    {
-                        Regenerate(settings.RegenAmountEnemies, dt, team);
-                    }
-                    else
-                    {
-                        Regenerate(settings.RegenAmountEnemyTroops, dt, team);
-                    }
-                }
-            }
+            if (Agent.Health >= healthLimit) healAgent = false;
         }
 
         private void Regenerate(float ratePercent, float dt, Team agentTeam = null)
@@ -121,7 +102,7 @@ namespace BattleRegen
 
             if (Agent.Health > 0f && Agent.Health < healthLimit)
             {
-                double modifier = GetHealthModifier(agentTeam, out Healer healers);
+                var (modifier, healers) = GetHealthModifier(agentTeam);
                 double baseRegenRate = ratePercent / 100.0 * Agent.HealthLimit; // regen rate is always based on all-time health limit
                 double regenRate = ApplyRegenModel(baseRegenRate, modifier);
                 double regenAmount = regenRate * dt;
@@ -158,9 +139,9 @@ namespace BattleRegen
             return regenRate;
         }
 
-        private double GetHealthModifier(Team agentTeam, out Healer healers)
+        private (double, Healer) GetHealthModifier(Team agentTeam)
         {
-            healers = 0;
+            Healer healers = 0;
             double modifier = 1.0;
             double percentMedBoost = settings.MedicineBoost / 100.0;
 
@@ -183,7 +164,7 @@ namespace BattleRegen
             if (settings.Debug)
                 Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} is receiving a {2} multiplier in health regeneration",
                     GetTroopType(agentTeam), Agent.Name, modifier));
-            return modifier;
+            return (modifier, healers);
         }
 
         private string GetTroopType(Team agentTeam)

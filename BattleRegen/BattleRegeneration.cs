@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
@@ -15,13 +16,11 @@ namespace BattleRegen
     {
         public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
         private readonly IBattleRegenSettings settings;
-        private readonly Mission mission;
         private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
 
-        public BattleRegeneration(Mission mission)
+        public BattleRegeneration()
         {
             settings = BattleRegenSettingsUtil.Instance;
-            this.mission = mission;
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
@@ -35,7 +34,7 @@ namespace BattleRegen
 
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
-            agent.AddComponent(new BattleRegenerationComponent(agent, mission, this));
+            agent.AddComponent(new BattleRegenerationComponent(agent, Mission, this));
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow blow)
@@ -46,44 +45,19 @@ namespace BattleRegen
         public override void OnAgentDeleted(Agent affectedAgent)
         {
             BattleRegenerationComponent component = affectedAgent.GetComponent<BattleRegenerationComponent>();
-            if (component != default)
-                affectedAgent.RemoveComponent(component);
+            if (component != default) affectedAgent.RemoveComponent(component);
+        }
+
+        public override void OnRegisterBlow(Agent attacker, Agent victim, GameEntity realHitEntity, Blow b, ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon)
+        {
+            attacker?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            attacker?.MountAgent?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            victim?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
         }
 
         public override void OnMissionTick(float dt)
         {
-            //if (mission.MissionEnded() || mission.IsMissionEnding)
-            //    return;
-            //else
-            //{
-            //    var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
-            //    if (arenaController != default && arenaController.AfterPractice) return;
-            //}
-
-            //// Multi-threading work mk4
-            //Queue<Agent> agents = new Queue<Agent>(mission.Agents);
-            //List<Task> tasks = new List<Task>();
-
-            //while (agents.Count > 0)
-            //{
-            //    Agent agent = agents.Dequeue();
-            //    Tuple<Agent, float> agentHpPair;
-            //    lock (agentHpPairs.SyncRoot)
-            //    {
-            //        agentHpPair = agentHpPairs.FirstOrDefault(x => x.Item1 == agent);
-            //        if (agentHpPair == default)
-            //        {
-            //            agentHpPair = new Tuple<Agent, float>(agent, agent.Health);
-            //            agentHpPairs.Add(agentHpPair);
-            //        }
-            //    }
-            //    tasks.Add(Task.Run(() => OnAction(agent, agentHpPair.Item2, dt)));
-            //}
-
-            //foreach (Task task in tasks)
-            //    task.Wait();
-
-            mission.MainAgent?.GetComponent<BattleRegenerationComponent>()?.OnTick(dt);
+            Mission.MainAgent?.GetComponent<BattleRegenerationComponent>()?.OnTickAsAI(dt);
         }
 
         protected override void OnEndMission()
