@@ -35,20 +35,23 @@ namespace BattleRegen
 
         internal void TickHeal() => healAgent = true;
 
-        public async override void OnTickAsAI(float dt)
+        public override void OnTickAsAI(float dt)
         {
-            if (healAgent) await Task.Run(() => AttemptRegeneration(dt)).ConfigureAwait(false);
+            //if (healAgent) await Task.Run(() => AttemptRegeneration(dt)).ConfigureAwait(false);
+            if (healAgent) AttemptRegeneration(dt);
         }
 
         private void AttemptRegeneration(float dt)
         {
-            if (mission.MissionEnded() || mission.IsMissionEnding)
-                return;
-            else
-            {
-                var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
-                if (arenaController != default && arenaController.AfterPractice) return;
-            }
+            //if (mission.MissionEnded() || mission.IsMissionEnding)
+            //    return;
+            //else
+            //{
+            //    var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
+            //    if (arenaController != default && arenaController.AfterPractice) return;
+            //}
+            var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
+            if (arenaController != default && arenaController.AfterPractice) return;
 
             if (Agent.Health > 0 && Agent.Health < healthLimit)
             {
