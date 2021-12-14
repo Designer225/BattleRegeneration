@@ -50,7 +50,7 @@ namespace BattleRegen
             //    var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
             //    if (arenaController != default && arenaController.AfterPractice) return;
             //}
-            var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
+            var arenaController = mission.GetMissionBehavior<ArenaPracticeFightMissionController>();
             if (arenaController != default && arenaController.AfterPractice) return;
 
             if (Agent.Health > 0 && Agent.Health < healthLimit)

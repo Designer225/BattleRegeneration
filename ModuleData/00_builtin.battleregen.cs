@@ -9,7 +9,7 @@ using TaleWorlds.MountAndBlade;
 namespace BattleRegen.Formulas
 {
     // Linear regen formula
-    public sealed class LinearFormula : Formula
+    sealed class LinearFormula : Formula
     {
         // You must define this property.
         public override string Name => "{=BattleRegen_Linear}Linear";
@@ -24,12 +24,12 @@ namespace BattleRegen.Formulas
         // You must define this method as it is called by the game when regenerating.
         public override double Calculate(RegenDataInfo data)
         {
-            return data.RegenRate;
+            return data.regenRate;
         }
     }
 
     // Quadratic regen formula
-    public sealed class QuadraticFormula : Formula
+    sealed class QuadraticFormula : Formula
     {
         public override string Name => "{=BattleRegen_Quadratic}Quadratic";
 
@@ -41,15 +41,15 @@ namespace BattleRegen.Formulas
         public override double Calculate(RegenDataInfo data)
         {
             // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d
-            double maxRegenRate = 2 * data.RegenRate;
-            double regenChangeRate = -maxRegenRate / data.OriginalRegenTime;
+            double maxRegenRate = 2 * data.regenRate;
+            double regenChangeRate = -maxRegenRate / data.originalRegenTime;
 
-            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -data.Agent.Health, out double t1, out double t2))
+            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -data.agent.Health, out double t1, out double t2))
             {
-                if (t1 >= 0 && t1 < data.RegenTime)
-                    return maxRegenRate * (data.RegenTime - t1) / data.RegenTime;
-                else if (t2 >= 0 && t2 < data.RegenTime)
-                    return maxRegenRate * (data.RegenTime - t2) / data.RegenTime;
+                if (t1 >= 0 && t1 < data.regenTime)
+                    return maxRegenRate * (data.regenTime - t1) / data.regenTime;
+                else if (t2 >= 0 && t2 < data.regenTime)
+                    return maxRegenRate * (data.regenTime - t2) / data.regenTime;
             }
 
             return 0.0;
@@ -71,7 +71,7 @@ namespace BattleRegen.Formulas
     }
 
     // EVE Online regen formula
-    public sealed class EveOnlineFormula : Formula
+    sealed class EveOnlineFormula : Formula
     {
         public override string Name => "{=BattleRegen_EveOnline}EVE Online";
 
@@ -82,8 +82,8 @@ namespace BattleRegen.Formulas
 
         public override double Calculate(RegenDataInfo data)
         {
-            double healthToMaxRatio = data.Agent.Health / data.Agent.HealthLimit;
-            return 10 * data.RegenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
+            double healthToMaxRatio = data.agent.Health / data.agent.HealthLimit;
+            return 10 * data.regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
         }
     }
 }

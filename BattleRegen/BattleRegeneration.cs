@@ -12,9 +12,9 @@ using TaleWorlds.MountAndBlade;
 
 namespace BattleRegen
 {
-    sealed class BattleRegeneration : MissionBehaviour
+    sealed class BattleRegeneration : MissionBehavior
     {
-        public override MissionBehaviourType BehaviourType => MissionBehaviourType.Other;
+        public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
         private readonly IBattleRegenSettings settings;
         private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
 

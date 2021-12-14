@@ -72,7 +72,7 @@ namespace BattleRegen
         public virtual double Calculate(RegenDataInfo data)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            return Calculate(data.Agent, data.RegenRate, data.OriginalRegenTime);
+            return Calculate(data.agent, data.regenRate, data.originalRegenTime);
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 

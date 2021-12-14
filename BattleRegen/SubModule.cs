@@ -22,10 +22,10 @@ namespace BattleRegen
             _ = BattleRegenSettingsUtil.Instance;
         }
 
-        public override void OnMissionBehaviourInitialize(Mission mission)
+        public override void OnMissionBehaviorInitialize(Mission mission)
         {
-            base.OnMissionBehaviourInitialize(mission);
-            mission.AddMissionBehaviour(new BattleRegeneration());
+            base.OnMissionBehaviorInitialize(mission);
+            mission.AddMissionBehavior(new BattleRegeneration());
         }
     }
 

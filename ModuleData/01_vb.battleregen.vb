@@ -6,7 +6,7 @@ Imports TaleWorlds.MountAndBlade
 Namespace BattleRegen.Formulas
     ' Sine regen formula - credit: WyrdOh (https://forums.nexusmods.com/index.php?showtopic=8702373/#entry86794963)
     ' Rewritten in VB as an example. I personally prefer C#, but VB works.
-    Public NotInheritable Class SineFormula
+    NotInheritable Class SineFormula
         Inherits Formula
         Public Overrides ReadOnly Property Name As String = "{=BattleRegen_Sine}Sine"
 
@@ -16,8 +16,8 @@ Namespace BattleRegen.Formulas
         Public Overrides ReadOnly Property Priority As Integer = Integer.MinValue
 
         Public Overrides Function Calculate(data As RegenDataInfo) As Double
-            Dim ratio As Double = data.Agent.Health / data.Agent.HealthLimit
-            Return 2.5 * data.RegenRate * Math.Sin(Math.PI / 2 * ratio)
+            Dim ratio As Double = data.agent.Health / data.agent.HealthLimit
+            Return 2.5 * data.regenRate * Math.Sin(Math.PI / 2 * ratio)
         End Function
     End Class
 End Namespace
