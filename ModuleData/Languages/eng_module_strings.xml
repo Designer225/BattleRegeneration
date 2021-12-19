@@ -1,42 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
-  <tags>
-    <tag language="English"/>
-  </tags>
-  <strings>
-    <string id="BattleRegen_ModNameText" text="Battle Regeneration"/>
+    <tags>
+        <tag language="English"/>
+    </tags>
+    <strings>
+        <string id="BattleRegen_ModNameText" text="Battle Regeneration"/>
     
-    <string id="BattleRegen_RegenValuesName" text="Regeneration Values"/>
-    <string id="BattleRegen_RegenAmountName" text="Player Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountHint" text="What percent of total health to be regenerated every second. (Regen is applied continuously with this mod.) Default is 1%."/>
-    <string id="BattleRegen_RegenAmountCompanionsName" text="Companion Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountAlliesName" text="Allied Hero Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountPartyTroopsName" text="Party Troop Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountAlliedTroopsName" text="Allied Troop Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountEnemiesName" text="Enemy Hero Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountEnemyTroopsName" text="Enemy Troop Regen Amount (Percents) Per Second"/>
-    <string id="BattleRegen_RegenAmountAnimalsName" text="Animal Regen Amount (Percents) Per Second"/>
-	
-    <string id="BattleRegen_MedicineBoostName" text="Medicine Boost (Percents)"/>
-    <string id="BattleRegen_MedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a human agent's medicine skill. Riders affect regen for their mounts at standard efficiency. Bonuses stack additively. Default is 50%."/>
-    <string id="BattleRegen_CommanderMedicineBoostName" text="Medicine Boost (Percents) For Commanders"/>
-    <string id="BattleRegen_CommanderMedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a commander's medicine skills. Bonuses stack additively. Default is 25%."/>
-    <string id="BattleRegen_XpGainName" text="XP Gain Per Full Health"/>
-    <string id="BattleRegen_XpGainHint" text="How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 5."/>
-    <string id="BattleRegen_CommanderXpGainName" text="XP Gain Per Full Health For Commanders"/>
-    <string id="BattleRegen_CommanderXpGainHint" text="How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.5."/>
+        <string id="BattleRegen_RegenValuesName" text="Regeneration Values"/>
+        <string id="BattleRegen_RegenAmountName" text="Player Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountHint" text="What percent of total health to be regenerated every second. (Regen is applied continuously with this mod.) Default is 1%."/>
+        <string id="BattleRegen_RegenAmountCompanionsName" text="Companion Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountAlliesName" text="Allied Hero Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountPartyTroopsName" text="Party Troop Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountAlliedTroopsName" text="Allied Troop Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountEnemiesName" text="Enemy Hero Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountEnemyTroopsName" text="Enemy Troop Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountAnimalsName" text="Animal Regen Amount (Percents) Per Second"/>
+    
+        <string id="BattleRegen_MedicineBoostName" text="Medicine Boost (Percents)"/>
+        <string id="BattleRegen_MedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a human agent's medicine skill. Riders affect regen for their mounts at standard efficiency. Bonuses stack additively. Default is 50%."/>
+        <string id="BattleRegen_CommanderMedicineBoostName" text="Medicine Boost (Percents) For Commanders"/>
+        <string id="BattleRegen_CommanderMedicineBoostHint" text="Regen is increased by this percentage for every 50 points in a commander's medicine skills. Bonuses stack additively. Default is 25%."/>
+        <string id="BattleRegen_XpGainName" text="XP Gain Per Full Health"/>
+        <string id="BattleRegen_XpGainHint" text="How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 5."/>
+        <string id="BattleRegen_CommanderXpGainName" text="XP Gain Per Full Health For Commanders"/>
+        <string id="BattleRegen_CommanderXpGainHint" text="How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.5."/>
+    
+        <string id="BattleRegen_RegenSettingsName" text="Regeneration Settings"/>
+        <string id="BattleRegen_RegenModelDropdownName" text="Regeneration Model"/>
+        <string id="BattleRegen_RegenModelDropdownHint" text="Determines the model used for regenerating health. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear."/>
+        <string id="BattleRegen_HealToFullName" text="Heal to Max Health"/>
+        <string id="BattleRegen_HealToFullHint" text="Enable to allow healing to max health, beyond your character's starting health in battle. Default is disabled. (Note: settings will not take effect until after (re)starting a battle.)"/>
+        <string id="BattleRegen_DelayedRegenTimeName" text="Time Before Regeneration"/>
+        <string id="BattleRegen_DelayedRegenTimeHint" text="The time taken before regeneration will occur. Default is 0 (disabled)."/>
+        <string id="BattleRegen_DebugName" text="Debug Mode"/>
+        <string id="BattleRegen_DebugHint" text="Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false."/>
 
-    <string id="BattleRegen_RegenSettingsName" text="Regeneration Settings"/>
-    <string id="BattleRegen_RegenModelDropdownName" text="Regeneration Model"/>
-    <string id="BattleRegen_RegenModelDropdownHint" text="Determines the model used for regenerating health. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear."/>
-    <string id="BattleRegen_HealToFullName" text="Heal to Max Health"/>
-    <string id="BattleRegen_HealToFullHint" text="Enable to allow healing to max health, beyond your character's starting health in battle. Default is disabled. (Note: settings will not take effect until after (re)starting a battle.)"/>
-    <string id="BattleRegen_DebugName" text="Debug Mode"/>
-    <string id="BattleRegen_DebugHint" text="Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false."/>
-
-    <string id="BattleRegen_Linear" text="Linear"/>
-    <string id="BattleRegen_Quadratic" text="Quadratic"/>
-    <string id="BattleRegen_EveOnline" text="EVE Online"/>
-    <string id="BattleRegen_Sine" text="Sine"/>
-  </strings>
+        <string id="BattleRegen_Linear" text="Linear"/>
+        <string id="BattleRegen_Quadratic" text="Quadratic"/>
+        <string id="BattleRegen_EveOnline" text="EVE Online"/>
+        <string id="BattleRegen_Sine" text="Sine"/>
+    </strings>
 </base>

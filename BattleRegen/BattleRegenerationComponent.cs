@@ -21,6 +21,7 @@ namespace BattleRegen
         private readonly Mission mission;
         private readonly BattleRegeneration behavior;
 
+        private float timeSinceLastAttack;
         private bool healAgent;
 
         public BattleRegenerationComponent(Agent agent, Mission mission, BattleRegeneration behavior) : base(agent)
@@ -33,12 +34,17 @@ namespace BattleRegen
             healAgent = false;
         }
 
-        internal void TickHeal() => healAgent = true;
+        internal void TickHeal()
+        {
+            timeSinceLastAttack = 0f;
+            healAgent = true;
+        }
 
         public override void OnTickAsAI(float dt)
         {
             //if (healAgent) await Task.Run(() => AttemptRegeneration(dt)).ConfigureAwait(false);
-            if (healAgent) AttemptRegeneration(dt);
+            timeSinceLastAttack += dt;
+            if (healAgent && timeSinceLastAttack > settings.DelayedRegenTime) AttemptRegeneration(dt);
         }
 
         private void AttemptRegeneration(float dt)

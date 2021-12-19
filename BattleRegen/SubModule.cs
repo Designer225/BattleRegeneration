@@ -19,7 +19,14 @@ namespace BattleRegen
             new Harmony("d225.battleregen").PatchAll();
 
             // load config first
-            _ = BattleRegenSettingsUtil.Instance;
+            try
+            {
+                _ = BattleRegenSettingsUtil.Instance;
+            }
+            catch (Exception e)
+            {
+                Debug.Print(e.ToString());
+            }
         }
 
         public override void OnMissionBehaviorInitialize(Mission mission)

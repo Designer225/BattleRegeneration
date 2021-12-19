@@ -25,15 +25,17 @@ namespace BattleRegen
             XpGainHint                      = "{=BattleRegen_XpGainHint}How much XP is gained when an agent or its rider (if applicable) heals enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 5.",
             CommanderXpGainName             = "{=BattleRegen_CommanderXpGainName}XP Gain Per Full Health For Commanders",
             CommanderXpGainHint             = "{=BattleRegen_CommanderXpGainHint}How much XP is gained when a commander heals an agent enough to refill its health bar from 0 to max health. XP gain is continuous. Default is 0.5.",
-            
+
             RegenSettingsName               = "{=BattleRegen_RegenSettingsName}Regeneration Settings",
             RegenModelDropdownName          = "{=BattleRegen_RegenModelDropdownName}Regeneration Model",
             RegenModelDropdownHint          = "{=BattleRegen_RegenModelDropdownHint}Determines the model used for regenerating health. See Nexus Mods page (https://www.nexusmods.com/mountandblade2bannerlord/mods/1432) for more details. Default is Linear.",
             HealToFullName                  = "{=BattleRegen_HealToFullName}Heal to Max Health",
             HealToFullHint                  = "{=BattleRegen_HealToFullHint}Enable to allow healing to max health, beyond your character's starting health in battle. Default is disabled. (Note: settings will not take effect until after (re)starting a battle.)",
+            DelayedRegenTimeName            = "{=BattleRegen_DelayedRegenTimeName}Time Before Regeneration",
+            DelayedRegenTimeHint            = "{=BattleRegen_DelayedRegenTimeHint}The time taken before regeneration will occur. Default is 0 (disabled).",
             DebugName                       = "{=BattleRegen_DebugName}Debug Mode",
             DebugHint                       = "{=BattleRegen_DebugHint}Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.";
-
+            
             //UseSliderForRegenModelName      = "{=BattleRegen_UseSliderForRegenModelName}Use Slider for Regen Model",
             //UseSliderForRegenModelHint      = "{=BattleRegen_UseSliderForRegenModelHint}Should the mod use a slider for regen instead of dropdown options.",
             //SliderRegenModelName            = "{=BattleRegen_SliderRegenModelName}Regeneration Model",

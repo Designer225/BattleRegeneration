@@ -102,6 +102,8 @@ namespace BattleRegen
 
         bool HealToFull { get; set; }
 
+        float DelayedRegenTime { get; set; }
+
         bool Debug { get; set; }
 
         Formula RegenModel { get; }
@@ -155,6 +157,9 @@ namespace BattleRegen
 
         [XmlElement(DataType = "boolean")]
         public bool HealToFull { get; set; } = false;
+
+        [XmlElement(DataType = "float")]
+        public float DelayedRegenTime { get; set; } = 0f;
 
         [XmlElement(DataType = "boolean")]
         public bool Debug { get; set; } = false;
@@ -229,11 +234,15 @@ namespace BattleRegen
         [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
         public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
 
-        [SettingPropertyBool(HealToFullName, HintText = HealToFullHint, Order = 14, RequireRestart = false)]
+        [SettingPropertyBool(HealToFullName, HintText = HealToFullHint, Order = 13, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
         public bool HealToFull { get; set; } = false;
 
-        [SettingPropertyBool(DebugName, HintText = DebugHint, Order = 14, RequireRestart = false)]
+        [SettingPropertyFloatingInteger(DelayedRegenTimeName, 0f, 100f, HintText = DelayedRegenTimeHint, Order = 14, RequireRestart = false)]
+        [SettingPropertyGroup(RegenSettingsName)]
+        public float DelayedRegenTime { get; set; } = 0f;
+
+        [SettingPropertyBool(DebugName, HintText = DebugHint, Order = 15, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
         public bool Debug { get; set; } = false;
         #endregion
