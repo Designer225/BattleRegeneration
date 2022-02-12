@@ -24,7 +24,7 @@ namespace BattleRegen
         {
             settings = BattleRegenSettingsUtil.Instance;
             heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, float>>();
-            activeAgents = new Dictionary<Agent, BattleRegenerationComponent>(1000); // default max agent cap without mods
+            activeAgents = new Dictionary<Agent, BattleRegenerationComponent>(2048); // default max agent cap without mods
             messages = new ConcurrentQueue<string>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");

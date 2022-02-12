@@ -114,7 +114,8 @@ namespace BattleRegen
 
             try
             {
-                regenRate = settings.RegenModel.Calculate(new RegenDataInfo(Agent, healthLimit, regenRate, regenTime, origRegenTime));
+                var data = new RegenDataInfo(Agent, healthLimit, regenRate, regenTime, origRegenTime);
+                regenRate = settings.RegenModel.Calculate(ref data);
             }
             catch (Exception e)
             {

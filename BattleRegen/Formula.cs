@@ -65,13 +65,11 @@ namespace BattleRegen
 
         /// <summary>
         /// Performs calculation with this formula, given regeneration data, and returns a value. Subclasses should provide their own implementation of this method,
-        /// for this method returns zero by default.
-        /// <para />
-        /// Note: For VB.NET, specify <see cref="InAttribute"/> alongside 'ByRef' so that the runtime can treat <paramref name="data"/> as an 'in' parameter.
+        /// for this method returns zero by default. All parameters are passed by reference.
         /// </summary>
         /// <param name="data">The regeneration data information. See <see cref="RegenDataInfo"/>.</param>
         /// <returns>The modified regeneration rate.</returns>
-        public abstract float Calculate(in RegenDataInfo data);
+        public abstract float Calculate(ref RegenDataInfo data);
 
         /// <summary>
         /// Compares the current formula with the other formula. Formulas are sorted first by Priority and then by Id.

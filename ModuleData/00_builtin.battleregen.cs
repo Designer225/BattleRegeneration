@@ -1,6 +1,7 @@
 // The following (or their VB equivalent) should be what you need to put at the top of any code file.
 using BattleRegen;
 using System;
+using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
 // Namespaces are recommended for organization purposes. You do not need to define your formulas in the BattleRegen.Formulas namespace. In fact, you are discouraged from
@@ -22,7 +23,7 @@ namespace BattleRegen.Formulas
         public override int Priority => int.MinValue;
 
         // You must define this method as it is called by the game when regenerating.
-        public override float Calculate(in RegenDataInfo data)
+        public override float Calculate(ref RegenDataInfo data)
         {
             return data.regenRate;
         }
@@ -38,32 +39,32 @@ namespace BattleRegen.Formulas
         // Built-in values must be loaded first. Quadratic should be right behind Linear.
         public override int Priority => int.MinValue;
 
-        public override float Calculate(in RegenDataInfo data)
+        public override float Calculate(ref RegenDataInfo data)
         {
             // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d
-            float maxRegenRate = 2 * data.regenRate;
+            float maxRegenRate = 2f * data.regenRate;
             float regenChangeRate = -maxRegenRate / data.originalRegenTime;
 
-            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -data.agent.Health, out float t1, out float t2))
+            if (SolveForFactors(regenChangeRate / 2f, maxRegenRate, -data.agent.Health, out float t1, out float t2))
             {
-                if (t1 >= 0 && t1 < data.regenTime)
+                if (t1 >= 0f && t1 < data.regenTime)
                     return maxRegenRate * (data.regenTime - t1) / data.regenTime;
-                else if (t2 >= 0 && t2 < data.regenTime)
+                else if (t2 >= 0f && t2 < data.regenTime)
                     return maxRegenRate * (data.regenTime - t2) / data.regenTime;
             }
 
-            return 0.0;
+            return 0f;
         }
 
         // Helper method for the above formula - yes, you can do that
         private bool SolveForFactors(float a, float b, float c, out float x1, out float x2)
         {
-            x1 = 0;
-            x2 = 0;
-            float discriminant = b * b - 4 * a * c;
-            if (discriminant < 0) return false;
+            x1 = 0f;
+            x2 = 0f;
+            float discriminant = b * b - 4f * a * c;
+            if (discriminant < 0f) return false;
 
-            float sqrtDiscriminant = Math.Sqrt(discriminant);
+            float sqrtDiscriminant = MathF.Sqrt(discriminant);
             x1 = (-b + sqrtDiscriminant) / (2 * a);
             x2 = (-b - sqrtDiscriminant) / (2 * a);
             return true;
@@ -80,10 +81,10 @@ namespace BattleRegen.Formulas
         // Built-in values must be loaded first. EveOnline should be right behind Quadratic.
         public override int Priority => int.MinValue;
 
-        public override float Calculate(in RegenDataInfo data)
+        public override float Calculate(ref RegenDataInfo data)
         {
             float healthToMaxRatio = data.agent.Health / data.agent.HealthLimit;
-            return 10 * data.regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
+            return 10f * data.regenRate * (MathF.Sqrt(healthToMaxRatio) - healthToMaxRatio);
         }
     }
 }
