@@ -22,7 +22,7 @@ namespace BattleRegen.Formulas
         public override int Priority => int.MinValue;
 
         // You must define this method as it is called by the game when regenerating.
-        public override double Calculate(RegenDataInfo data)
+        public override float Calculate(in RegenDataInfo data)
         {
             return data.regenRate;
         }
@@ -38,13 +38,13 @@ namespace BattleRegen.Formulas
         // Built-in values must be loaded first. Quadratic should be right behind Linear.
         public override int Priority => int.MinValue;
 
-        public override double Calculate(RegenDataInfo data)
+        public override float Calculate(in RegenDataInfo data)
         {
             // d = v0*t + (a*t^2)/2 -> 0 = (a*t^2)/2 + v0*t - d
-            double maxRegenRate = 2 * data.regenRate;
-            double regenChangeRate = -maxRegenRate / data.originalRegenTime;
+            float maxRegenRate = 2 * data.regenRate;
+            float regenChangeRate = -maxRegenRate / data.originalRegenTime;
 
-            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -data.agent.Health, out double t1, out double t2))
+            if (SolveForFactors(regenChangeRate / 2.0, maxRegenRate, -data.agent.Health, out float t1, out float t2))
             {
                 if (t1 >= 0 && t1 < data.regenTime)
                     return maxRegenRate * (data.regenTime - t1) / data.regenTime;
@@ -56,14 +56,14 @@ namespace BattleRegen.Formulas
         }
 
         // Helper method for the above formula - yes, you can do that
-        private bool SolveForFactors(double a, double b, double c, out double x1, out double x2)
+        private bool SolveForFactors(float a, float b, float c, out float x1, out float x2)
         {
             x1 = 0;
             x2 = 0;
-            double discriminant = b * b - 4 * a * c;
+            float discriminant = b * b - 4 * a * c;
             if (discriminant < 0) return false;
 
-            double sqrtDiscriminant = Math.Sqrt(discriminant);
+            float sqrtDiscriminant = Math.Sqrt(discriminant);
             x1 = (-b + sqrtDiscriminant) / (2 * a);
             x2 = (-b - sqrtDiscriminant) / (2 * a);
             return true;
@@ -80,9 +80,9 @@ namespace BattleRegen.Formulas
         // Built-in values must be loaded first. EveOnline should be right behind Quadratic.
         public override int Priority => int.MinValue;
 
-        public override double Calculate(RegenDataInfo data)
+        public override float Calculate(in RegenDataInfo data)
         {
-            double healthToMaxRatio = data.agent.Health / data.agent.HealthLimit;
+            float healthToMaxRatio = data.agent.Health / data.agent.HealthLimit;
             return 10 * data.regenRate * (Math.Sqrt(healthToMaxRatio) - healthToMaxRatio);
         }
     }

@@ -16,12 +16,16 @@ namespace BattleRegen
     {
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
         private readonly IBattleRegenSettings settings;
-        private readonly ConcurrentQueue<Tuple<Hero, double>> heroXpGainPairs;
+        private readonly ConcurrentQueue<Tuple<Hero, float>> heroXpGainPairs;
+        private readonly Dictionary<Agent, BattleRegenerationComponent> activeAgents;
+        internal readonly ConcurrentQueue<string> messages;
 
         public BattleRegeneration()
         {
             settings = BattleRegenSettingsUtil.Instance;
-            heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, double>>();
+            heroXpGainPairs = new ConcurrentQueue<Tuple<Hero, float>>();
+            activeAgents = new Dictionary<Agent, BattleRegenerationComponent>(1000); // default max agent cap without mods
+            messages = new ConcurrentQueue<string>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
             Debug.Print($"[BattleRegeneration] Debug mode on, dumping settings: regen mode: {settings.RegenModel}, " +
@@ -32,9 +36,11 @@ namespace BattleRegen
                 $"enemy troops:{settings.RegenAmountEnemyTroops}, animals:{settings.RegenAmountAnimals}");
         }
 
-        public override void OnAgentBuild(Agent agent, Banner banner)
+        public override void OnAgentCreated(Agent agent)
         {
-            agent.AddComponent(new BattleRegenerationComponent(agent, Mission, this));
+            var comp = new BattleRegenerationComponent(agent, this);
+            activeAgents.Add(agent, comp);
+            agent.AddComponent(comp);
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow blow)
@@ -44,20 +50,34 @@ namespace BattleRegen
 
         public override void OnAgentDeleted(Agent affectedAgent)
         {
-            BattleRegenerationComponent component = affectedAgent.GetComponent<BattleRegenerationComponent>();
-            if (component != default) affectedAgent.RemoveComponent(component);
+            if (activeAgents.TryGetValue(affectedAgent, out var component))
+            {
+                affectedAgent.RemoveComponent(component);
+                activeAgents.Remove(affectedAgent);
+            }
         }
 
         public override void OnRegisterBlow(Agent attacker, Agent victim, GameEntity realHitEntity, Blow b, ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon)
         {
-            attacker?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
-            attacker?.MountAgent?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
-            victim?.GetComponent<BattleRegenerationComponent>()?.TickHeal();
+            if (victim != null && activeAgents.TryGetValue(victim, out var comp)) comp.TickHeal();
+            if (attacker != null)
+            {
+                if (activeAgents.TryGetValue(attacker, out comp)) comp.TickHeal();
+                if (attacker.MountAgent != null && activeAgents.TryGetValue(attacker.MountAgent, out comp)) comp.TickHeal();
+            }
         }
 
         public override void OnMissionTick(float dt)
         {
-            Mission.MainAgent?.GetComponent<BattleRegenerationComponent>()?.OnTickAsAI(dt);
+            var arenaController = Mission.GetMissionBehavior<ArenaPracticeFightMissionController>();
+            if (arenaController != default && arenaController.AfterPractice) return;
+
+            Parallel.ForEach(activeAgents, kv => kv.Value.AttemptRegeneration(dt));
+            while (!messages.IsEmpty)
+            {
+                if (messages.TryDequeue(out var msg))
+                    Debug.Print(msg);
+            }
         }
 
         protected override void OnEndMission()
@@ -66,14 +86,13 @@ namespace BattleRegen
 
             while (!heroXpGainPairs.IsEmpty)
             {
-                bool success = heroXpGainPairs.TryDequeue(out Tuple<Hero, double> heroXpGainPair);
-                if (!success) continue;
+                if (!heroXpGainPairs.TryDequeue(out Tuple<Hero, float> heroXpGainPair)) continue;
 
                 try
                 {
                     if (heroXpGainPair.Item1 != default)
                     {
-                        heroXpGainPair.Item1.AddSkillXp(DefaultSkills.Medicine, (float)(heroXpGainPair.Item2));
+                        heroXpGainPair.Item1.AddSkillXp(DefaultSkills.Medicine, heroXpGainPair.Item2);
                         if (settings.Debug)
                             Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Item1.Name} has received {heroXpGainPair.Item2} xp from battle");
                     }
@@ -85,36 +104,36 @@ namespace BattleRegen
             }
         }
 
-        public void GiveXpToHealers(Agent agent, Team agentTeam, Healer healers, double regenAmount)
+        public void GiveXpToHealers(Agent agent, Team agentTeam, Healer healers, float regenAmount)
         {
-            double xpGain = regenAmount / agent.HealthLimit; // xp gain is also based on all-time health limit
+            float xpGain = regenAmount / agent.HealthLimit; // xp gain is also based on all-time health limit
 
             if ((healers & Healer.General) == Healer.General && agentTeam.GeneralAgent.IsHero)
             {
-                double cdrXpGain = xpGain * settings.CommanderXpGain;
+                float cdrXpGain = xpGain * settings.CommanderXpGain;
                 Hero commander = (agentTeam.GeneralAgent.Character as CharacterObject).HeroObject;
-                heroXpGainPairs.Enqueue(new Tuple<Hero, double>(commander, cdrXpGain));
+                heroXpGainPairs.Enqueue(new Tuple<Hero, float>(commander, cdrXpGain));
 
                 if (settings.Debug)
-                    Debug.Print($"[BattleRegeneration] commander agent {agentTeam.GeneralAgent.Name} has received {cdrXpGain} xp");
+                    messages.Enqueue($"[BattleRegeneration] commander agent {agentTeam.GeneralAgent.Name} has received {cdrXpGain} xp");
             }
             if ((healers & Healer.Self) == Healer.Self && agent.IsHero)
             {
-                double selfXpGain = xpGain * settings.XpGain;
+                float selfXpGain = xpGain * settings.XpGain;
                 Hero hero = (agent.Character as CharacterObject).HeroObject;
-                heroXpGainPairs.Enqueue(new Tuple<Hero, double>(hero, selfXpGain));
+                heroXpGainPairs.Enqueue(new Tuple<Hero, float>(hero, selfXpGain));
 
                 if (settings.Debug)
-                    Debug.Print($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
+                    messages.Enqueue($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
             }
             if ((healers & Healer.Rider) == Healer.Rider && agent.MountAgent.IsHero)
             {
-                double riderXpGain = xpGain * settings.XpGain;
+                float riderXpGain = xpGain * settings.XpGain;
                 Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
-                heroXpGainPairs.Enqueue(new Tuple<Hero, double>(rider, riderXpGain));
+                heroXpGainPairs.Enqueue(new Tuple<Hero, float>(rider, riderXpGain));
 
                 if (settings.Debug)
-                    Debug.Print($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
+                    messages.Enqueue($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
             }
         }
 
@@ -124,6 +143,9 @@ namespace BattleRegen
 
             while (!heroXpGainPairs.IsEmpty)
                 heroXpGainPairs.TryDequeue(out _);
+            while (!messages.IsEmpty)
+                messages.TryDequeue(out _);
+            activeAgents.Clear();
 
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }

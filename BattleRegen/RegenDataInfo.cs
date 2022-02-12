@@ -21,19 +21,19 @@ namespace BattleRegen
         /// <summary>
         /// The regeneration rate for the agent.
         /// </summary>
-        public readonly double regenRate;
+        public readonly float regenRate;
 
         /// <summary>
         /// The time it takes for the agent to heal from zero to the health limit.
         /// </summary>
-        public readonly double regenTime;
+        public readonly float regenTime;
 
         /// <summary>
         /// The time it takes for the agent to heal from zero to full health.
         /// </summary>
-        public readonly double originalRegenTime;
+        public readonly float originalRegenTime;
 
-        internal RegenDataInfo(Agent agent, float healthLimit, double regenRate, double regenTime, double origRegenTime)
+        internal RegenDataInfo(Agent agent, float healthLimit, float regenRate, float regenTime, float origRegenTime)
         {
             this.agent = agent;
             this.healthLimit = healthLimit;
