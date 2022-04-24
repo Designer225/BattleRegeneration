@@ -18,46 +18,25 @@ namespace BattleRegen
 
         private readonly float healthLimit;
         private readonly IBattleRegenSettings settings;
-        private readonly Mission mission;
         private readonly BattleRegeneration behavior;
 
         private float timeSinceLastAttack;
-        private bool healAgent;
 
-        public BattleRegenerationComponent(Agent agent, Mission mission, BattleRegeneration behavior) : base(agent)
+        public BattleRegenerationComponent(Agent agent, BattleRegeneration behavior) : base(agent)
         {
             settings = BattleRegenSettingsUtil.Instance;
             healthLimit = settings.HealToFull ? agent.HealthLimit : agent.Health;
-            this.mission = mission;
             this.behavior = behavior;
 
-            healAgent = false;
-        }
-
-        internal void TickHeal()
-        {
             timeSinceLastAttack = 0f;
-            healAgent = true;
         }
 
-        public override void OnTickAsAI(float dt)
+        internal void TickHeal() => timeSinceLastAttack = 0f;
+
+        internal void AttemptRegeneration(float dt)
         {
-            //if (healAgent) await Task.Run(() => AttemptRegeneration(dt)).ConfigureAwait(false);
             timeSinceLastAttack += dt;
-            if (healAgent && timeSinceLastAttack > settings.DelayedRegenTime) AttemptRegeneration(dt);
-        }
-
-        private void AttemptRegeneration(float dt)
-        {
-            //if (mission.MissionEnded() || mission.IsMissionEnding)
-            //    return;
-            //else
-            //{
-            //    var arenaController = mission.GetMissionBehaviour<ArenaPracticeFightMissionController>();
-            //    if (arenaController != default && arenaController.AfterPractice) return;
-            //}
-            var arenaController = mission.GetMissionBehavior<ArenaPracticeFightMissionController>();
-            if (arenaController != default && arenaController.AfterPractice) return;
+            if (timeSinceLastAttack < settings.DelayedRegenTime) return;
 
             if (Agent.Health > 0 && Agent.Health < healthLimit)
             {
@@ -98,11 +77,9 @@ namespace BattleRegen
                 }
                 catch (Exception e)
                 {
-                    Debug.Print($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
+                    behavior.messages.Enqueue($"[BattleRegeneration] An exception has occurred attempting to heal {Agent.Name}. Will try again next tick.\nException: {e}");
                 }
             }
-
-            if (Agent.Health >= healthLimit) healAgent = false;
         }
 
         private void Regenerate(float ratePercent, float dt, Team agentTeam = null)
@@ -112,9 +89,9 @@ namespace BattleRegen
             if (Agent.Health > 0f && Agent.Health < healthLimit)
             {
                 var (modifier, healers) = GetHealthModifier(agentTeam);
-                double baseRegenRate = ratePercent / 100.0 * Agent.HealthLimit; // regen rate is always based on all-time health limit
-                double regenRate = ApplyRegenModel(baseRegenRate, modifier);
-                double regenAmount = regenRate * dt;
+                float baseRegenRate = ratePercent / 100f * Agent.HealthLimit; // regen rate is always based on all-time health limit
+                float regenRate = ApplyRegenModel(baseRegenRate, modifier);
+                float regenAmount = regenRate * dt;
 
                 if (Agent.Health + regenAmount >= healthLimit)
                     Agent.Health = healthLimit;
@@ -124,54 +101,54 @@ namespace BattleRegen
                 if (Game.Current.GameType is Campaign)
                     behavior.GiveXpToHealers(Agent, agentTeam, healers, regenAmount);
                 if (settings.Debug)
-                    Debug.Print($"[BattleRegeneration] {GetTroopType(agentTeam)} agent {Agent.Name} health: {Agent.Health}, health limit: {healthLimit}, " +
+                    behavior.messages.Enqueue($"[BattleRegeneration] {GetTroopType(agentTeam)} agent {Agent.Name} health: {Agent.Health}, health limit: {healthLimit}, " +
                         $"health added: {regenAmount} (base: {baseRegenRate * dt}, multiplier: {modifier}), dt: {dt}");
             }
         }
 
-        private double ApplyRegenModel(double baseRegenRate, double modifier)
+        private float ApplyRegenModel(float baseRegenRate, float modifier)
         {
-            double regenRate = baseRegenRate * modifier;
-            double regenTime = healthLimit / regenRate;
-            double origRegenTime = Agent.HealthLimit / regenRate;
+            float regenRate = baseRegenRate * modifier;
+            float regenTime = healthLimit / regenRate;
+            float origRegenTime = Agent.HealthLimit / regenRate;
 
             try
             {
-                RegenDataInfo data = new RegenDataInfo(Agent, healthLimit, regenRate, regenTime, origRegenTime);
-                regenRate = settings.RegenModel.Calculate(data);
+                var data = new RegenDataInfo(Agent, healthLimit, regenRate, regenTime, origRegenTime);
+                regenRate = settings.RegenModel.Calculate(ref data);
             }
             catch (Exception e)
             {
-                Debug.Print($"[BattleRegeneration] An exception has occurred attempting to calculate regen value for {Agent.Name}. Using linear instead.\nException: {e}");
+                behavior.messages.Enqueue($"[BattleRegeneration] An exception has occurred attempting to calculate regen value for {Agent.Name}. Using linear instead.\nException: {e}");
             }
 
             return regenRate;
         }
 
-        private (double, Healer) GetHealthModifier(Team agentTeam)
+        private (float, Healer) GetHealthModifier(Team agentTeam)
         {
             Healer healers = 0;
-            double modifier = 1.0;
-            double percentMedBoost = settings.MedicineBoost / 100.0;
+            float modifier = 1f;
+            float percentMedBoost = settings.MedicineBoost / 100f;
 
             if (agentTeam != null && agentTeam.GeneralAgent != null)
             {
-                modifier += agentTeam.GeneralAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * settings.CommanderMedicineBoost / 100.0;
+                modifier += agentTeam.GeneralAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * settings.CommanderMedicineBoost / 100f;
                 healers |= Healer.General;
             }
             if (Agent.Monster.FamilyType == HumanFamilyType) // Since only humans have skills...
             {
-                modifier += Agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
+                modifier += Agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * percentMedBoost;
                 healers |= Healer.Self;
             }
             else if (Agent.IsMount && Agent.MountAgent != null)
             {
-                modifier += Agent.MountAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50.0 * percentMedBoost;
+                modifier += Agent.MountAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * percentMedBoost;
                 healers |= Healer.Rider;
             }
 
             if (settings.Debug)
-                Debug.Print(string.Format("[BattleRegeneration] {0} agent {1} is receiving a {2} multiplier in health regeneration",
+                behavior.messages.Enqueue(string.Format("[BattleRegeneration] {0} agent {1} is receiving a {2} multiplier in health regeneration",
                     GetTroopType(agentTeam), Agent.Name, modifier));
             return (modifier, healers);
         }

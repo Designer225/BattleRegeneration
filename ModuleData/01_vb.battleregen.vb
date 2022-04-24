@@ -1,6 +1,8 @@
 ' I'm not as well-versed in VB as I'm in C#. Apologies if it look bad.
 Imports BattleRegen
 Imports System
+Imports System.Runtime.InteropServices
+Imports TaleWorlds.Library
 Imports TaleWorlds.MountAndBlade
 
 Namespace BattleRegen.Formulas
@@ -15,9 +17,9 @@ Namespace BattleRegen.Formulas
         ' Built-in values must be loaded first. Sine should be right behind EveOnline.
         Public Overrides ReadOnly Property Priority As Integer = Integer.MinValue
 
-        Public Overrides Function Calculate(data As RegenDataInfo) As Double
-            Dim ratio As Double = data.agent.Health / data.agent.HealthLimit
-            Return 2.5 * data.regenRate * Math.Sin(Math.PI / 2 * ratio)
+        Public Overrides Function Calculate(ByRef data As RegenDataInfo) As Single
+            Dim ratio As Single = data.agent.Health / data.agent.HealthLimit
+            Return 2.5F * data.regenRate * MathF.Sin(MathF.PI / 2.0F * ratio)
         End Function
     End Class
 End Namespace

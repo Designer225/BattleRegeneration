@@ -9,12 +9,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.ModuleManager;
-using TaleWorlds.MountAndBlade;
 
 namespace BattleRegen
 {
@@ -65,32 +65,11 @@ namespace BattleRegen
 
         /// <summary>
         /// Performs calculation with this formula, given regeneration data, and returns a value. Subclasses should provide their own implementation of this method,
-        /// for this method returns zero by default.
+        /// for this method returns zero by default. All parameters are passed by reference.
         /// </summary>
         /// <param name="data">The regeneration data information. See <see cref="RegenDataInfo"/>.</param>
         /// <returns>The modified regeneration rate.</returns>
-        public virtual double Calculate(RegenDataInfo data)
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            return Calculate(data.agent, data.regenRate, data.originalRegenTime);
-#pragma warning restore CS0618 // Type or member is obsolete
-        }
-
-        /// <summary>
-        /// <inheritdoc cref="Calculate(RegenDataInfo)"/>
-        /// <para />
-        /// Obsoleted in v1.2.4; override <see cref="Calculate(RegenDataInfo)"/> instead. This method only remains for compatibility reasons.
-        /// </summary>
-        /// <param name="agent">The agent whose stat will be used for calculation.</param>
-        /// <param name="regenRate">The regeneration rate for the specified agent.</param>
-        /// <param name="regenTime">The time it takes for the specified agent to be fully healed from zero.</param>
-        /// <returns>The modified regeneration rate.</returns>
-        /// <seealso cref="Calculate(RegenDataInfo)"/>
-        [Obsolete("Superseded by Calculate(RegenDataInfo); override that method instead.")]
-        public virtual double Calculate(Agent agent, double regenRate, double regenTime)
-        {
-            return 0.0;
-        }
+        public abstract float Calculate(ref RegenDataInfo data);
 
         /// <summary>
         /// Compares the current formula with the other formula. Formulas are sorted first by Priority and then by Id.
