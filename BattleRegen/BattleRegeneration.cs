@@ -37,11 +37,16 @@ namespace BattleRegen
                 $"enemy troops:{settings.RegenAmountEnemyTroops}, animals:{settings.RegenAmountAnimals}");
         }
 
-        public override void OnAgentCreated(Agent agent)
+        public override void OnAgentBuild(Agent agent, Banner banner)
         {
             var comp = new BattleRegenerationComponent(agent, this);
             activeAgents.Add(agent, comp);
             agent.AddComponent(comp);
+
+            if (settings.Debug)
+                Debug.Print($"[BattleRegen] agent {agent.Name} registered");
+
+            //if (agent.MountAgent != null) OnAgentCreated(agent.MountAgent);
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow blow)
@@ -55,6 +60,9 @@ namespace BattleRegen
             {
                 affectedAgent.RemoveComponent(component);
                 activeAgents.Remove(affectedAgent);
+
+                if (settings.Debug)
+                    Debug.Print($"[BattleRegen] agent {affectedAgent.Name} unregistered");
             }
         }
 
@@ -76,7 +84,7 @@ namespace BattleRegen
             Parallel.ForEach(activeAgents, kv => kv.Value.AttemptRegeneration(dt));
             while (!messages.IsEmpty)
             {
-                if (messages.TryDequeue(out var msg))
+                if (messages.TryDequeue(out var msg) && settings.Debug)
                     Debug.Print(msg);
             }
         }
