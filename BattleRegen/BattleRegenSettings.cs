@@ -1,7 +1,7 @@
 ﻿using MCM.Abstractions.Attributes;
 using MCM.Abstractions.Attributes.v2;
-using MCM.Abstractions.Dropdown;
-using MCM.Abstractions.Settings.Base.Global;
+using MCM.Abstractions.Base.Global;
+using MCM.Common;
 using System;
 using System.IO;
 using System.Text;
@@ -98,7 +98,7 @@ namespace BattleRegen
 
         float CommanderXpGain { get; set; }
 
-        DropdownDefault<Formula> RegenModelDropdown { get; set; }
+        Dropdown<Formula> RegenModelDropdown { get; set; }
 
         bool HealToFull { get; set; }
 
@@ -150,7 +150,7 @@ namespace BattleRegen
         public float CommanderXpGain { get; set; } = 0.5f;
 
         [XmlIgnore]
-        public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas(); // not serialized as the list should be built only once
+        public Dropdown<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas(); // not serialized as the list should be built only once
 
         [XmlElement]
         public string RegenModelString { get; set; } = "00_Linear"; // had to hard code this because of necessity
@@ -232,7 +232,7 @@ namespace BattleRegen
         #region Regeneration Settings
         [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 12, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
-        public DropdownDefault<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
+        public Dropdown<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
 
         [SettingPropertyBool(HealToFullName, HintText = HealToFullHint, Order = 13, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]

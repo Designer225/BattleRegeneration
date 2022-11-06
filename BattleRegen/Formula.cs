@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using MCM.Abstractions.Dropdown;
+using MCM.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -83,9 +83,9 @@ namespace BattleRegen
         }
 
         #region internal methods
-        internal static DropdownDefault<Formula> GetFormulas()
+        internal static Dropdown<Formula> GetFormulas()
         {
-            return new DropdownDefault<Formula>(formulas, 0);
+            return new Dropdown<Formula>(formulas, 0);
         }
 
         [CommandLineFunctionality.CommandLineArgumentFunction("list_scripts", "battleregen")]
