@@ -13,20 +13,24 @@ namespace BattleRegen
 {
     class SubModule : MBSubModuleBase
     {
-        protected override void OnSubModuleLoad()
-        {
-            base.OnSubModuleLoad();
-            new Harmony("d225.battleregen").PatchAll();
+        private bool _isLoaded = false;
 
-            // load config first
-            try
-            {
-                _ = BattleRegenSettingsUtil.Instance;
-            }
-            catch (Exception e)
-            {
-                Debug.Print(e.ToString());
-            }
+        protected override void OnBeforeInitialModuleScreenSetAsRoot()
+        {
+            if (_isLoaded) return;
+            base.OnBeforeInitialModuleScreenSetAsRoot();
+            new Harmony("d225.battleregen").PatchAll();
+            _isLoaded = true;
+
+            //// load config first
+            //try
+            //{
+            //    _ = BattleRegenSettingsUtil.Instance;
+            //}
+            //catch (Exception e)
+            //{
+            //    Debug.Print(e.ToString());
+            //}
         }
 
         public override void OnMissionBehaviorInitialize(Mission mission)
