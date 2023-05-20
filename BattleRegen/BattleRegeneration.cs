@@ -3,6 +3,7 @@ using SandBox.Missions.MissionLogics.Arena;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
@@ -32,7 +33,7 @@ namespace BattleRegen
             Debug.Print($"[BattleRegeneration] Debug mode on, dumping settings: regen mode: {settings.RegenModel}, " +
                 $"medicine boost: {settings.RegenAmount}, regen model: {settings.MedicineBoost}, commander medicine boost: {settings.CommanderMedicineBoost}, " +
                 $"xp gain: {settings.XpGain}, commander xp gain: {settings.CommanderXpGain}, " +
-                $"regen in percent HP: player:{settings.RegenAmount}, companions:{settings.RegenAmountCompanions}, allied heroes:{settings.RegenAmountAllies}, " +
+                $"regen in percent HP: player:{settings.RegenAmount}, subordinate:{settings.RegenAmountCompanions}, allied heroes:{settings.RegenAmountAllies}, " +
                 $"party troops:{settings.RegenAmountPartyTroops}, allied troops:{settings.RegenAmountAlliedTroops}, enemy heroes:{settings.RegenAmountEnemies}, " +
                 $"enemy troops:{settings.RegenAmountEnemyTroops}, animals:{settings.RegenAmountAnimals}");
         }
@@ -99,7 +100,7 @@ namespace BattleRegen
                     if (heroXpGainPair.Item1 != default)
                     {
                         heroXpGainPair.Item1.AddSkillXp(DefaultSkills.Medicine, heroXpGainPair.Item2);
-                        if (settings.Debug)
+                        if (settings.VerboseDebug)
                             Debug.Print($"[BattleRegeneration] hero {heroXpGainPair.Item1.Name} has received {heroXpGainPair.Item2} xp from battle");
                     }
                 }
@@ -110,36 +111,51 @@ namespace BattleRegen
             }
         }
 
-        public void GiveXpToHealers(Agent agent, Team agentTeam, Healer healers, float regenAmount)
+        public void GiveXpToHealers(Agent agent, TroopType troopType, float regenAmount)
         {
             float xpGain = regenAmount / agent.HealthLimit; // xp gain is also based on all-time health limit
 
-            if ((healers & Healer.General) == Healer.General && agentTeam.GeneralAgent.IsHero)
+            switch(troopType)
             {
-                float cdrXpGain = xpGain * settings.CommanderXpGain;
-                Hero commander = (agentTeam.GeneralAgent.Character as CharacterObject).HeroObject;
-                heroXpGainPairs.Enqueue(new Tuple<Hero, float>(commander, cdrXpGain));
+                case TroopType.Mount:
+                case TroopType.Animal:
+                    float riderXpGain = xpGain * settings.XpGain;
+                    Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
+                    heroXpGainPairs.Enqueue(new Tuple<Hero, float>(rider, riderXpGain));
 
-                if (settings.VerboseDebug)
-                    messages.Enqueue($"[BattleRegeneration] commander agent {agentTeam.GeneralAgent.Name} has received {cdrXpGain} xp");
-            }
-            if ((healers & Healer.Self) == Healer.Self && agent.IsHero)
-            {
-                float selfXpGain = xpGain * settings.XpGain;
-                Hero hero = (agent.Character as CharacterObject).HeroObject;
-                heroXpGainPairs.Enqueue(new Tuple<Hero, float>(hero, selfXpGain));
+                    if (settings.VerboseDebug)
+                        messages.Enqueue($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
+                    break;
+                default:
+                    float selfXpGain = xpGain * settings.XpGain;
+                    Hero hero = (agent.Character as CharacterObject).HeroObject;
+                    heroXpGainPairs.Enqueue(new Tuple<Hero, float>(hero, selfXpGain));
+                    if (settings.VerboseDebug)
+                        messages.Enqueue($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
 
-                if (settings.VerboseDebug)
-                    messages.Enqueue($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
-            }
-            if ((healers & Healer.Rider) == Healer.Rider && agent.MountAgent.IsHero)
-            {
-                float riderXpGain = xpGain * settings.XpGain;
-                Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
-                heroXpGainPairs.Enqueue(new Tuple<Hero, float>(rider, riderXpGain));
-
-                if (settings.VerboseDebug)
-                    messages.Enqueue($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
+                    float cdrXpGain = xpGain * settings.CommanderXpGain;
+                    Hero commander = default;
+                    switch (troopType)
+                    {
+                        case TroopType.Player:
+                        case TroopType.Subordinate:
+                        case TroopType.PlayerTroop:
+                            commander = (Agent.Main.Character as CharacterObject).HeroObject;
+                            break;
+                        case TroopType.AlliedHero:
+                        case TroopType.AlliedTroop:
+                        case TroopType.EnemyHero:
+                        case TroopType.EnemyTroop:
+                            commander = (agent.Team.GeneralAgent.Character as CharacterObject).HeroObject;
+                            break;
+                    }
+                    if (commander != default)
+                    {
+                        heroXpGainPairs.Enqueue(new Tuple<Hero, float>(commander, cdrXpGain));
+                        if (settings.VerboseDebug)
+                            messages.Enqueue($"[BattleRegeneration] commander agent {commander.Name} has received {cdrXpGain} xp");
+                    }
+                    break;
             }
         }
 
@@ -155,13 +171,5 @@ namespace BattleRegen
 
             Debug.Print("[BattleRegeneration] Mission reset, clearing existing data");
         }
-    }
-
-    [Flags]
-    enum Healer
-    {
-        General = 1,
-        Self = 2,
-        Rider = 4
     }
 }
