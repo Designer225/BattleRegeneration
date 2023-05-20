@@ -35,6 +35,8 @@
         <string id="BattleRegen_DelayedRegenTimeHint" text="The time taken before regeneration will occur. Default is 0 (disabled)."/>
         <string id="BattleRegen_DebugName" text="Debug Mode"/>
         <string id="BattleRegen_DebugHint" text="Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false."/>
+        <string id="BattleRegen_VerboseDebugName" text="Verbose Debug"/>
+        <string id="BattleRegen_VerboseDebugHint" text="Whether to print verbose debug outputs (e.g. heals) to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false."/>
 
         <string id="BattleRegen_Linear" text="Linear"/>
         <string id="BattleRegen_Quadratic" text="Quadratic"/>

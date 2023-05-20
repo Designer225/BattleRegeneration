@@ -43,9 +43,6 @@ namespace BattleRegen
             activeAgents.Add(agent, comp);
             agent.AddComponent(comp);
 
-            if (settings.Debug)
-                Debug.Print($"[BattleRegen] agent {agent.Name} registered");
-
             //if (agent.MountAgent != null) OnAgentCreated(agent.MountAgent);
         }
 
@@ -69,7 +66,7 @@ namespace BattleRegen
         public override void OnRegisterBlow(Agent attacker, Agent victim, GameEntity realHitEntity, Blow b, ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon)
         {
             if (victim != null && activeAgents.TryGetValue(victim, out var comp)) comp.TickHeal();
-            if (attacker != null)
+            if (b.SelfInflictedDamage == 1 && attacker != null)
             {
                 if (activeAgents.TryGetValue(attacker, out comp)) comp.TickHeal();
                 if (attacker.MountAgent != null && activeAgents.TryGetValue(attacker.MountAgent, out comp)) comp.TickHeal();
@@ -84,7 +81,7 @@ namespace BattleRegen
             Parallel.ForEach(activeAgents, kv => kv.Value.AttemptRegeneration(dt));
             while (!messages.IsEmpty)
             {
-                if (messages.TryDequeue(out var msg) && settings.Debug)
+                if (messages.TryDequeue(out var msg))
                     Debug.Print(msg);
             }
         }
@@ -123,7 +120,7 @@ namespace BattleRegen
                 Hero commander = (agentTeam.GeneralAgent.Character as CharacterObject).HeroObject;
                 heroXpGainPairs.Enqueue(new Tuple<Hero, float>(commander, cdrXpGain));
 
-                if (settings.Debug)
+                if (settings.VerboseDebug)
                     messages.Enqueue($"[BattleRegeneration] commander agent {agentTeam.GeneralAgent.Name} has received {cdrXpGain} xp");
             }
             if ((healers & Healer.Self) == Healer.Self && agent.IsHero)
@@ -132,7 +129,7 @@ namespace BattleRegen
                 Hero hero = (agent.Character as CharacterObject).HeroObject;
                 heroXpGainPairs.Enqueue(new Tuple<Hero, float>(hero, selfXpGain));
 
-                if (settings.Debug)
+                if (settings.VerboseDebug)
                     messages.Enqueue($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
             }
             if ((healers & Healer.Rider) == Healer.Rider && agent.MountAgent.IsHero)
@@ -141,7 +138,7 @@ namespace BattleRegen
                 Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
                 heroXpGainPairs.Enqueue(new Tuple<Hero, float>(rider, riderXpGain));
 
-                if (settings.Debug)
+                if (settings.VerboseDebug)
                     messages.Enqueue($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
             }
         }

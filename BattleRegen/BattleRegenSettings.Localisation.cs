@@ -34,7 +34,9 @@ namespace BattleRegen
             DelayedRegenTimeName            = "{=BattleRegen_DelayedRegenTimeName}Time Before Regeneration",
             DelayedRegenTimeHint            = "{=BattleRegen_DelayedRegenTimeHint}The time taken before regeneration will occur. Default is 0 (disabled).",
             DebugName                       = "{=BattleRegen_DebugName}Debug Mode",
-            DebugHint                       = "{=BattleRegen_DebugHint}Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.";
+            DebugHint                       = "{=BattleRegen_DebugHint}Whether to print debug outputs to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.",
+            VerboseDebugName                = "{=BattleRegen_VerboseDebugName}Verbose Debug",
+            VerboseDebugHint                = "{=BattleRegen_VerboseDebugHint}Whether to print verbose debug outputs (e.g. heals) to log (in C:/ProgramData/Mount and Blade II Bannerlord/logs folder). Default is false.";
             
             //UseSliderForRegenModelName      = "{=BattleRegen_UseSliderForRegenModelName}Use Slider for Regen Model",
             //UseSliderForRegenModelHint      = "{=BattleRegen_UseSliderForRegenModelHint}Should the mod use a slider for regen instead of dropdown options.",

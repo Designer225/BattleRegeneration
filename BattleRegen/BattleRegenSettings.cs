@@ -106,6 +106,8 @@ namespace BattleRegen
 
         bool Debug { get; set; }
 
+        bool VerboseDebug { get; set; }
+
         Formula RegenModel { get; }
     }
 
@@ -163,6 +165,9 @@ namespace BattleRegen
 
         [XmlElement(DataType = "boolean")]
         public bool Debug { get; set; } = false;
+
+        [XmlElement(DataType = "boolean")]
+        public bool VerboseDebug { get; set; } = false;
 
         [XmlIgnore]
         public Formula RegenModel => RegenModelDropdown.Find(x => x.Id == RegenModelString); // also not serialized as this is supposed to return a value at runtime
@@ -245,6 +250,10 @@ namespace BattleRegen
         [SettingPropertyBool(DebugName, HintText = DebugHint, Order = 15, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]
         public bool Debug { get; set; } = false;
+
+        [SettingPropertyBool(VerboseDebugName, HintText = VerboseDebugHint, Order = 16, RequireRestart = false)]
+        [SettingPropertyGroup(RegenSettingsName)]
+        public bool VerboseDebug { get; set; } = false;
         #endregion
 
         public Formula RegenModel => RegenModelDropdown.SelectedValue;

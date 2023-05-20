@@ -1,10 +1,5 @@
-﻿using SandBox;
+﻿using Microsoft.CodeAnalysis.Operations;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -29,6 +24,12 @@ namespace BattleRegen
             this.behavior = behavior;
 
             timeSinceLastAttack = 0f;
+
+            if (settings.Debug)
+            {
+                var team = agent.Monster.FamilyType != HumanFamilyType ? agent.MountAgent?.Team : agent.Team;
+                Debug.Print($"[BattleRegen] agent is classified as {Enum.GetName(typeof(TroopType), GetTroopType())} at the time of creation");
+            }
         }
 
         internal void TickHeal() => timeSinceLastAttack = 0f;
@@ -42,37 +43,36 @@ namespace BattleRegen
             {
                 try
                 {
-                    if (Agent.Monster.FamilyType != HumanFamilyType)
+                    switch(GetTroopType())
                     {
-                        Regenerate(settings.RegenAmountAnimals, dt, Agent.MountAgent?.Team);
-                    }
-                    else if (Agent.IsPlayerControlled)
-                    {
-                        Regenerate(settings.RegenAmount, dt);
-                    }
-                    else
-                    {
-                        Team team = Agent.Team;
-                        if (team == null)
-                        {
-                            if (Agent.IsHero) Regenerate(settings.RegenAmountEnemies, dt);
-                            else Regenerate(settings.RegenAmountEnemyTroops, dt);
-                        }
-                        else if (team.IsPlayerTeam)
-                        {
-                            if (Agent.IsHero) Regenerate(settings.RegenAmountCompanions, dt, team);
-                            else Regenerate(settings.RegenAmountPartyTroops, dt, team);
-                        }
-                        else if (team.IsPlayerAlly)
-                        {
-                            if (Agent.IsHero) Regenerate(settings.RegenAmountAllies, dt, team);
-                            else Regenerate(settings.RegenAmountAlliedTroops, dt, team);
-                        }
-                        else
-                        {
-                            if (Agent.IsHero) Regenerate(settings.RegenAmountEnemies, dt, team);
-                            else Regenerate(settings.RegenAmountEnemyTroops, dt, team);
-                        }
+                        case TroopType.Mount:
+                        case TroopType.Animal:
+                            Regenerate(settings.RegenAmountAnimals, dt, Agent.MountAgent?.Team);
+                            break;
+                        case TroopType.Player:
+                            Regenerate(settings.RegenAmount, dt);
+                            break;
+                        case TroopType.Subordinate:
+                            Regenerate(settings.RegenAmountCompanions, dt);
+                            break;
+                        case TroopType.PlayerTroop:
+                            Regenerate(settings.RegenAmountPartyTroops, dt);
+                            break;
+                        case TroopType.AlliedHero:
+                            Regenerate(settings.RegenAmountAllies, dt);
+                            break;
+                        case TroopType.AlliedTroop:
+                            Regenerate(settings.RegenAmountAlliedTroops, dt);
+                            break;
+                        case TroopType.IndependentHero:
+                        case TroopType.EnemyHero:
+                            Regenerate(settings.RegenAmountEnemies, dt);
+                            break;
+                        case TroopType.IndependentTroop:
+                        case TroopType.EnemyTroop:
+                        default:
+                            Regenerate(settings.RegenAmountEnemyTroops, dt);
+                            break;
                     }
                 }
                 catch (Exception e)
@@ -100,8 +100,8 @@ namespace BattleRegen
 
                 if (Game.Current.GameType is Campaign)
                     behavior.GiveXpToHealers(Agent, agentTeam, healers, regenAmount);
-                if (settings.Debug)
-                    behavior.messages.Enqueue($"[BattleRegeneration] {GetTroopType(agentTeam)} agent {Agent.Name} health: {Agent.Health}, health limit: {healthLimit}, " +
+                if (settings.VerboseDebug)
+                    behavior.messages.Enqueue($"[BattleRegeneration] {agentTeam} agent {Agent.Name} health: {Agent.Health}, health limit: {healthLimit}, " +
                         $"health added: {regenAmount} (base: {baseRegenRate * dt}, multiplier: {modifier}), dt: {dt}");
             }
         }
@@ -147,37 +147,61 @@ namespace BattleRegen
                 healers |= Healer.Rider;
             }
 
-            if (settings.Debug)
+            if (settings.VerboseDebug)
                 behavior.messages.Enqueue(string.Format("[BattleRegeneration] {0} agent {1} is receiving a {2} multiplier in health regeneration",
-                    GetTroopType(agentTeam), Agent.Name, modifier));
+                    agentTeam, Agent.Name, modifier));
             return (modifier, healers);
         }
 
-        private string GetTroopType(Team agentTeam)
+        private TroopType GetTroopType()
         {
-            if (Agent.IsMount) return "Mount";
-            else if (Agent.Monster.FamilyType != HumanFamilyType) return "Animal";
-            else if (Agent.IsPlayerControlled) return "Player";
-            else if (agentTeam == null)
+            try
             {
-                if (Agent.IsHero) return "Independent hero";
-                else return "Independent troop";
+                if (Agent.IsMount) return TroopType.Mount;
+                else if (Agent.Monster.FamilyType != HumanFamilyType) return TroopType.Animal;
+                else if (Agent.IsPlayerControlled) return TroopType.Player;
+                else if (Agent.Team == default)
+                {
+                    if (Agent.IsHero) return TroopType.IndependentHero;
+                    else return TroopType.IndependentTroop;
+                }
+                else if (Agent.Team.IsPlayerTeam)
+                {
+                    if (Agent.IsHero) return TroopType.Subordinate;
+                    else return TroopType.PlayerTroop;
+                }
+                else if (Agent.Team.IsPlayerAlly)
+                {
+                    if (Agent.IsHero) return TroopType.AlliedHero;
+                    else return TroopType.AlliedTroop;
+                }
+                else
+                {
+                    if (Agent.IsHero) return TroopType.EnemyHero;
+                    else return TroopType.EnemyTroop;
+                }
             }
-            else if (agentTeam.IsPlayerTeam)
+            catch (Exception e)
             {
-                if (Agent.IsHero) return "Companion";
-                else return "Player troop";
+                Debug.Print($"[BattleRegen]An error has occurred retriving troop type. None will be returned; note this is not normal behavior.\n{e}");
+                return TroopType.None;
             }
-            else if (agentTeam.IsPlayerAlly)
-            {
-                if (Agent.IsHero) return "Allied hero";
-                else return "allied troop";
-            }
-            else
-            {
-                if (Agent.IsHero) return "Enemy hero";
-                else return "Enemy troop";
-            }
+        }
+
+        private enum TroopType
+        {
+            None,
+            Mount,
+            Animal,
+            Player,
+            IndependentHero,
+            IndependentTroop,
+            Subordinate,
+            PlayerTroop,
+            AlliedHero,
+            AlliedTroop,
+            EnemyHero,
+            EnemyTroop
         }
     }
 }
