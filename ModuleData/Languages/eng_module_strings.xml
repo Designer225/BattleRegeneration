@@ -9,7 +9,8 @@
         <string id="BattleRegen_RegenValuesName" text="Regeneration Values"/>
         <string id="BattleRegen_RegenAmountName" text="Player Regen Amount (Percents) Per Second"/>
         <string id="BattleRegen_RegenAmountHint" text="What percent of total health to be regenerated every second. (Regen is applied continuously with this mod.) Default is 1%."/>
-        <string id="BattleRegen_RegenAmountCompanionsName" text="Subordinate Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountCompanionsName" text="Companion Regen Amount (Percents) Per Second"/>
+        <string id="BattleRegen_RegenAmountSubordinatesName" text="Subordinate Regen Amount (Percents) Per Second"/>
         <string id="BattleRegen_RegenAmountAlliesName" text="Allied Hero Regen Amount (Percents) Per Second"/>
         <string id="BattleRegen_RegenAmountPartyTroopsName" text="Party Troop Regen Amount (Percents) Per Second"/>
         <string id="BattleRegen_RegenAmountAlliedTroopsName" text="Allied Troop Regen Amount (Percents) Per Second"/>

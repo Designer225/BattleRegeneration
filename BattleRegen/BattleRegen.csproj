@@ -1,47 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{319091F6-50FC-48C7-8D7D-03500DE0EAC3}</ProjectGuid>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <BaseOutputPath>..\bin\Win64_Shipping_Client\</BaseOutputPath>
     <AssemblyTitle>Battle Regeneration</AssemblyTitle>
     <Product>Battle Regeneration</Product>
-    <Copyright>Copyright © Designer225 2020</Copyright>
+    <Copyright>Copyright © Designer225 2023</Copyright>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <PostBuildEvent />
-    <PostBuildEvent />
-    <PostBuildEvent />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>embedded</DebugType>
-    <OutputPath>..\bin\Win64_Shipping_Client\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>embedded</DebugType>
-    <OutputPath>..\bin\Win64_Shipping_Client\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <OutputPath>..\bin\Win64_Shipping_Client\</OutputPath>
-    <DebugType>full</DebugType>
-    <LangVersion>7.3</LangVersion>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <DocumentationFile>..\bin\Win64_Shipping_Client\BattleRegen.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>..\bin\Win64_Shipping_Client\</OutputPath>
-    <DebugType>pdbonly</DebugType>
-    <LangVersion>7.3</LangVersion>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent />
-    <BaseOutputPath>..\bin\Win64_Shipping_Client\</BaseOutputPath>
-    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <PlatformTarget>x64</PlatformTarget>
-    <Version>2.1.0.17</Version>
+    <Version>2.1.1.25</Version>
+    <DebugType>full</DebugType>
+    <DocumentationFile>..\bin\Win64_Shipping_Client\BattleRegen.xml</DocumentationFile>
+    <PackageOutputPath>$(BaseOutputPath)</PackageOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>portable</DebugType>
   </PropertyGroup>
   <Import Project="packages\Microsoft.CodeAnalysis.Analyzers.2.9.6\build\Microsoft.CodeAnalysis.Analyzers.props" Condition="Exists('packages\Microsoft.CodeAnalysis.Analyzers.2.9.6\build\Microsoft.CodeAnalysis.Analyzers.props')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -51,8 +29,8 @@
     <Error Condition="!Exists('packages\Microsoft.CodeAnalysis.Analyzers.2.9.6\build\Microsoft.CodeAnalysis.Analyzers.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.CodeAnalysis.Analyzers.2.9.6\build\Microsoft.CodeAnalysis.Analyzers.props'))" />
   </Target>
   <ItemGroup>
-    <PackageReference Include="Bannerlord.MCM" Version="5.0.4" />
-    <PackageReference Include="Lib.Harmony" Version="2.2.2" />
+    <PackageReference Include="Bannerlord.MCM" Version="5.7.1" />
+    <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="1.1.4.17949" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="2.9.6">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -68,106 +46,5 @@
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.1" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Lib.Harmony.2.1.1\lib\net48\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis, Version=3.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.CodeAnalysis.Common.3.4.0\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=3.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.CodeAnalysis.CSharp.3.4.0\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.VisualBasic, Version=3.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.CodeAnalysis.VisualBasic.3.4.0\lib\netstandard2.0\Microsoft.CodeAnalysis.VisualBasic.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.VisualBasic">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="SandBox">
-      <HintPath>..\..\SandBox\bin\Win64_Shipping_Client\SandBox.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.Buffers, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Buffers.4.4.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Collections.Immutable.1.5.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Memory.4.5.3\lib\netstandard2.0\System.Memory.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics.Vectors, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Numerics.Vectors.4.4.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reflection.Metadata, Version=1.4.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Reflection.Metadata.1.6.0\lib\netstandard2.0\System.Reflection.Metadata.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.4.5.2\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.InteropServices.RuntimeInformation">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Text.Encoding.CodePages, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Text.Encoding.CodePages.4.5.1\lib\net461\System.Text.Encoding.CodePages.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Threading.Tasks.Extensions.4.5.3\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Data.DataSetExtensions">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.Net.Http">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TaleWorlds.CampaignSystem">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.CampaignSystem.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TaleWorlds.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.Core.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="TaleWorlds.DotNet">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.DotNet.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TaleWorlds.Engine, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.Engine.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="TaleWorlds.Library, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.Library.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="TaleWorlds.Localization, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.Localization.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="TaleWorlds.ModuleManager">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.ModuleManager.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TaleWorlds.MountAndBlade">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.MountAndBlade.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TaleWorlds.ObjectSystem, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\..\..\bin\Win64_Shipping_Client\TaleWorlds.ObjectSystem.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="obj\x64\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
   </ItemGroup>
 </Project>

@@ -78,6 +78,8 @@ namespace BattleRegen
 
         float RegenAmountCompanions { get; set; }
 
+        float RegenAmountSubordinates { get; set; }
+
         float RegenAmountAllies { get; set; }
 
         float RegenAmountPartyTroops { get; set; }
@@ -120,6 +122,9 @@ namespace BattleRegen
 
         [XmlElement(DataType = "float")]
         public float RegenAmountCompanions { get; set; } = 1f;
+
+        [XmlElement(DataType = "float")]
+        public float RegenAmountSubordinates { get; set; } = 1f;
 
         [XmlElement(DataType = "float")]
         public float RegenAmountAllies { get; set; } = 1f;
@@ -192,6 +197,10 @@ namespace BattleRegen
         [SettingPropertyFloatingInteger(RegenAmountCompanionsName, 0f, 25f, HintText = RegenAmountHint, Order = 1, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]
         public float RegenAmountCompanions { get; set; } = 1f;
+
+        [SettingPropertyFloatingInteger(RegenAmountSubordinatesName, 0f, 25f, HintText = RegenAmountHint, Order = 1, RequireRestart = false)]
+        [SettingPropertyGroup(RegenValuesName)]
+        public float RegenAmountSubordinates { get; set; } = 1f;
 
         [SettingPropertyFloatingInteger(RegenAmountAlliesName, 0f, 25f, HintText = RegenAmountHint, Order = 2, RequireRestart = false)]
         [SettingPropertyGroup(RegenValuesName)]

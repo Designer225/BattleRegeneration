@@ -138,6 +138,7 @@ namespace BattleRegen
                     switch (troopType)
                     {
                         case TroopType.Player:
+                        case TroopType.Companion:
                         case TroopType.Subordinate:
                         case TroopType.PlayerTroop:
                             commander = (Agent.Main.Character as CharacterObject).HeroObject;

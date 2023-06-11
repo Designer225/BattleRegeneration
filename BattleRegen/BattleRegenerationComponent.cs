@@ -54,8 +54,11 @@ namespace BattleRegen
                         case TroopType.Player:
                             Regenerate(settings.RegenAmount, dt, troopType);
                             break;
-                        case TroopType.Subordinate:
+                        case TroopType.Companion:
                             Regenerate(settings.RegenAmountCompanions, dt, troopType);
+                            break;
+                        case TroopType.Subordinate:
+                            Regenerate(settings.RegenAmountSubordinates, dt, troopType);
                             break;
                         case TroopType.PlayerTroop:
                             Regenerate(settings.RegenAmountPartyTroops, dt, troopType);
@@ -145,6 +148,7 @@ namespace BattleRegen
                     switch(troopType)
                     {
                         case TroopType.Player:
+                        case TroopType.Companion:
                         case TroopType.Subordinate:
                         case TroopType.PlayerTroop:
                             modifier += Agent.Main.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * settings.CommanderMedicineBoost / 100f;
@@ -177,6 +181,8 @@ namespace BattleRegen
                 if (Agent.IsMount) return TroopType.Mount;
                 else if (Agent.Monster.FamilyType != HumanFamilyType) return TroopType.Animal;
                 else if (Agent.IsPlayerUnit) return TroopType.Player;
+                else if (Agent.IsHero && (Agent.Character as CharacterObject).HeroObject.IsPlayerCompanion)
+                    return TroopType.Companion;
                 else
                 {
                     var team = Agent.Team;
@@ -224,6 +230,7 @@ namespace BattleRegen
         Mount,
         Animal,
         Player,
+        Companion,
         IndependentHero,
         IndependentTroop,
         Subordinate,
