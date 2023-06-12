@@ -3,7 +3,7 @@
     <ProjectGuid>{319091F6-50FC-48C7-8D7D-03500DE0EAC3}</ProjectGuid>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
-    <BaseOutputPath>..\bin\Win64_Shipping_Client\</BaseOutputPath>
+    <OutputPath>..\bin\Win64_Shipping_Client\</OutputPath>
     <AssemblyTitle>Battle Regeneration</AssemblyTitle>
     <Product>Battle Regeneration</Product>
     <Copyright>Copyright © Designer225 2023</Copyright>
@@ -13,7 +13,7 @@
     <Version>2.1.1.25</Version>
     <DebugType>full</DebugType>
     <DocumentationFile>..\bin\Win64_Shipping_Client\BattleRegen.xml</DocumentationFile>
-    <PackageOutputPath>$(BaseOutputPath)</PackageOutputPath>
+    <PackageOutputPath>$(OutputPath)</PackageOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>portable</DebugType>
