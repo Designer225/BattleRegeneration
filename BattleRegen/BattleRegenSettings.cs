@@ -157,7 +157,7 @@ namespace BattleRegen
         public float CommanderXpGain { get; set; } = 0.5f;
 
         [XmlIgnore]
-        public Dropdown<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas(); // not serialized as the list should be built only once
+        public Dropdown<Formula> RegenModelDropdown { get; set; } = new Dropdown<Formula>(Formula.Formulas, 0); // not serialized as the list should be built only once
 
         [XmlElement]
         public string RegenModelString { get; set; } = "00_Linear"; // had to hard code this because of necessity
@@ -246,7 +246,7 @@ namespace BattleRegen
         #region Regeneration Settings
         [SettingPropertyDropdown(RegenModelDropdownName, HintText = RegenModelDropdownHint, Order = 12, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName, GroupOrder = 1)]
-        public Dropdown<Formula> RegenModelDropdown { get; set; } = Formula.GetFormulas();
+        public Dropdown<Formula> RegenModelDropdown { get; set; } = new Dropdown<Formula>(Formula.Formulas, 0);
 
         [SettingPropertyBool(HealToFullName, HintText = HealToFullHint, Order = 13, RequireRestart = false)]
         [SettingPropertyGroup(RegenSettingsName)]

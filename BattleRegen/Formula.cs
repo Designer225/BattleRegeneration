@@ -1,20 +1,8 @@
-﻿using HarmonyLib;
-using MCM.Common;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.VisualBasic;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using TaleWorlds.Core;
-using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using TaleWorlds.ModuleManager;
 
 namespace BattleRegen
 {
@@ -25,18 +13,12 @@ namespace BattleRegen
     /// </summary>
     public abstract class Formula : IComparable<Formula>
     {
-        private static readonly string ModulesPath = System.IO.Path.Combine(BasePath.Name, "Modules");
-
-        private static List<ModuleInfo> Modules { get; } = new List<ModuleInfo>();
-
-        private static readonly HashSet<string> loadedFiles = new HashSet<string>();
-
-        private static List<Formula> formulas = InitializeFormulas();
+        private static List<Formula> formulas = new List<Formula>();
 
         /// <summary>
         /// Returns a list of formulas loaded by the mod.
         /// </summary>
-        public static IEnumerable<Formula> Formulas => formulas.ToList();
+        public static IEnumerable<Formula> Formulas => formulas;
 
         /// <summary>
         /// The name of the formula.
@@ -82,172 +64,54 @@ namespace BattleRegen
             return comparison == 0 ? Id.CompareTo(other.Id) : comparison;
         }
 
-        #region internal methods
-        internal static Dropdown<Formula> GetFormulas()
-        {
-            return new Dropdown<Formula>(formulas, 0);
-        }
-
-        [CommandLineFunctionality.CommandLineArgumentFunction("list_scripts", "battleregen")]
-        internal static string ListScripts(List<string> strings)
-        {
-            return loadedFiles.Join(delimiter: "\n");
-        }
-
-        private static void CompileCode(FileInfo codeFile, Func<FileInfo, Compilation> function)
-        {
-            using (var stream = new MemoryStream())
-            {
-                var results = function(codeFile).Emit(stream);
-                var diagnostics = results.Diagnostics;
-                diagnostics.Do(x => Debug.Print($"[BattleRegen] {x}"));
-
-                if (diagnostics.Any(x => x.Severity == DiagnosticSeverity.Error || x.IsWarningAsError))
-                {
-                    Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} failed. See above for details.");
-                    return;
-                }
-                else if (diagnostics.Any(x => x.Severity == DiagnosticSeverity.Warning))
-                    Debug.Print($"[BattleRegen] Compilation of {codeFile.FullName} generated warnings. See above for details.");
-                Debug.Print($"[BattleRegen] {codeFile.FullName} compiled successfully.");
-
-                stream.Seek(0, SeekOrigin.Begin);
-                var assembly = Assembly.Load(stream.ToArray());
-                loadedFiles.Add(codeFile.FullName);
-                var types = assembly.GetTypes().Where(x => typeof(Formula).IsAssignableFrom(x));
-
-                if (types.IsEmpty())
-                    Debug.Print($"[BattleRegen] No class derived from {typeof(Formula).FullName} exists from {codeFile.FullName}.");
-                else types.Do(x => AddFormula(x));
-            }
-        }
-
-        private static Compilation GenerateCSharpCode(FileInfo codeFile)
-        {
-            using (var stream = codeFile.OpenRead())
-            {
-                var codestr = SourceText.From(stream);
-                var options = CSharpParseOptions.Default.WithLanguageVersion(Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp7_3);
-                var syntaxTree = Microsoft.CodeAnalysis.CSharp.SyntaxFactory.ParseSyntaxTree(codestr, options);
-                return CSharpCompilation.Create(System.IO.Path.GetRandomFileName(), new[] { syntaxTree },
-                    GetReferences(), new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
-            }
-        }
-
-        private static Compilation GenerateVisualBasicCode(FileInfo codeFile)
-        {
-            using (var stream = codeFile.OpenRead())
-            {
-                var codestr = SourceText.From(stream);
-                var options = VisualBasicParseOptions.Default.WithLanguageVersion(Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.VisualBasic16);
-                var syntaxTree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(codestr, options);
-                return VisualBasicCompilation.Create(System.IO.Path.GetRandomFileName(), new[] { syntaxTree },
-                    GetReferences(), new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
-            }
-        }
-
-        private static IEnumerable<MetadataReference> GetReferences()
-        {
-            var references = new Queue<MetadataReference>(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).Select(x => x.Location).Where(x => !x.IsEmpty())
-                .Select(x => MetadataReference.CreateFromFile(x)));
-            var usableRefs = new Stack<MetadataReference>();
-
-            // checks if compiler will function with the given references
-            while (references.Count > 0)
-            {
-                var reference = references.Dequeue();
-                usableRefs.Push(reference);
-                var compilation = CSharpCompilation.Create(System.IO.Path.GetRandomFileName(), new SyntaxTree[] { }, usableRefs,
-                    new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-                if (compilation.GetDiagnostics().Any(x => x.Severity == DiagnosticSeverity.Error))
-                {
-                    Debug.Print($"[BattleRegen] Warning: Cannot add {reference.Display} as a reference. This might cause compiler errors.");
-                    usableRefs.Pop();
-                }
-            }
-
-            return usableRefs;
-        }
-
-        internal static List<Formula> InitializeFormulas()
-        {
-            // Shamelessly copied from Custom Troop Upgrades because it's my mod
-            if (!Modules.IsEmpty()) Modules.Clear();
-            
-            string[] moduleNames = Utilities.GetModulesNames();
-            foreach (string moduleName in moduleNames)
-            {
-                ModuleInfo m = new ModuleInfo();
-                m.LoadWithFullPath(ModuleHelper.GetModuleFullPath(moduleName));
-
-                if (m.Id == "BattleRegeneration") Modules.Insert(0, m); // original mod should load first
-                else Modules.Add(m);
-            }
-
-            formulas = new List<Formula>();
-            CompileScripts("battleregen.cs", GenerateCSharpCode);
-            CompileScripts("battleregen.vb", GenerateVisualBasicCode);
-            return formulas;
-        }
-        #endregion
-
-        /// <summary>
-        /// Compiles scripts from source files with a given extension and the compilation function. If a directory is specified, source files
-        /// from said directory will be compiled. Otherwise, source files from ModuleData folders of all modules will be loaded.
-        /// </summary>
-        /// <param name="extension">The extension of source files.</param>
-        /// <param name="function">The function used to compile source files.</param>
-        /// <param name="sourcePath">Directory of source files. If specified, source files from the directory will be compiled. Otherwise,
-        /// source files from ModuleData folders of all modules will be loaded.</param>
-        public static void CompileScripts(string extension, Func<FileInfo, Compilation> function, DirectoryInfo sourcePath = default)
-        {
-            Debug.Print($"[BattleRegen] Compiling formulas from source files of extension '{extension}'. This could take a while.");
-            if (sourcePath != default && sourcePath.Exists)
-            {
-                Debug.Print($"[BattleRegen] Loading source files from {sourcePath.FullName}");
-                sourcePath.EnumerateFiles($"*.{extension}").Where(x => !loadedFiles.Contains(x.FullName)).Do(x => CompileCode(x, function));
-            }
-            else
-            {
-                Debug.Print("[BattleRegen] Loading source files from the ModuleData folders (if available) of all modules");
-                foreach (ModuleInfo module in Modules)
-                {
-                    DirectoryInfo dataPath = new DirectoryInfo(System.IO.Path.Combine(ModulesPath, module.Id, "ModuleData"));
-                    if (dataPath.Exists)
-                        dataPath.EnumerateFiles($"*.{extension}").Where(x => !loadedFiles.Contains(x.FullName)).Do(x => CompileCode(x, function));
-                }
-            }
-            formulas.Sort();
-            Debug.Print($"[BattleRegen] Loaded regeneration formulas from source files of extension '{extension}'. See mod entry in MCM for details.");
-        }
-
         /// <summary>
         /// Adds a formula, given the type parameter. If two formulas with the same <see cref="Id"/> exists, the one being added will replace the other.
         /// </summary>
         /// <typeparam name="T">A subtype of <see cref="Formula"/>.</typeparam>
         /// <returns>Whether the addition is successful.</returns>
-        /// <seealso cref="AddFormula(Type)"/>
-        public static bool AddFormula<T>() where T : Formula => AddFormula(typeof(T));
+        public static bool AddFormula<T>() where T : Formula
+        {
+            try
+            {
+                if (formulas.Any(x => x is T))
+                    Debug.Print($"[BattleRegen] {typeof(T).FullName} is already added");
+                else
+                {
+                    var formula = Activator.CreateInstance<T>();
+                    formulas.RemoveAll(x => x.Id == formula.Id);
+                    formulas.Add(formula);
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                string error = $"[BattleRegen] Failed to add an instance of {typeof(T).FullName} as a formula due to an exception.\n{e}";
+                Debug.Print(error);
+                InformationManager.DisplayMessage(new InformationMessage(error));
+            }
+            return false;
+        }
 
-        /// <inheritdoc cref="AddFormula{T}"/>
-        /// <seealso cref="AddFormula{T}"/>
+        /// <summary>
+        /// Adds a formula, given the type parameter. If two formulas with the same <see cref="Id"/> exists, the one being added will replace the other.
+        /// </summary>
+        /// <param name="type">A subtype of <see cref="Formula"/>.</param>
+        /// <returns>Whether the addition is successful.</returns>
         public static bool AddFormula(Type type)
         {
             try
             {
-                if (typeof(Formula).IsAssignableFrom(type) && !formulas.Any(x => x.GetType() == type))
+                if (!typeof(Formula).IsAssignableFrom(type))
+                    Debug.Print($"[BattleRegen] {type.FullName} is not a Formula subtype");
+                else if (formulas.Any(x => x.GetType() == type))
+                    Debug.Print($"[BattleRegen] {type.FullName} is already added");
+                else
                 {
-                    ConstructorInfo constructor = AccessTools.Constructor(type, Array.Empty<Type>());
-                    if (constructor != null)
-                    {
-                        Formula formula = constructor.Invoke(Array.Empty<object>()) as Formula;
-                        formulas.RemoveAll(x => x.Id == formula.Id); // remove old version before adding new version
-                        formulas.Add(formula);
-                        return true;
-                    }
-                    Debug.Print($"[BattleRegen] No constructor from {type.FullName} exists that take zero parameters");
+                    var formula = Activator.CreateInstance(type) as Formula;
+                    formulas.RemoveAll(x => x.Id == formula.Id);
+                    formulas.Add(formula);
+                    return true;
                 }
-                else Debug.Print($"[BattleRegen] {type.FullName} is not derived from Formula or is already added");
             }
             catch (Exception e)
             {
@@ -255,7 +119,6 @@ namespace BattleRegen
                 Debug.Print(error);
                 InformationManager.DisplayMessage(new InformationMessage(error));
             }
-
             return false;
         }
     }

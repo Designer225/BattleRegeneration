@@ -20,17 +20,12 @@ namespace BattleRegen
             if (_isLoaded) return;
             base.OnBeforeInitialModuleScreenSetAsRoot();
             new Harmony("d225.battleregen").PatchAll();
-            _isLoaded = true;
 
-            //// load config first
-            //try
-            //{
-            //    _ = BattleRegenSettingsUtil.Instance;
-            //}
-            //catch (Exception e)
-            //{
-            //    Debug.Print(e.ToString());
-            //}
+            // loads every subtype of Formula and add them
+            foreach (var type in AccessTools.AllTypes().AsParallel().Where(x => typeof(Formula).IsAssignableFrom(x)))
+                Formula.AddFormula(type);
+
+            _isLoaded = true;
         }
 
         public override void OnMissionBehaviorInitialize(Mission mission)
