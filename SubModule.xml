@@ -1,7 +1,7 @@
 <Module>
   <Name value="Battle Regeneration"/>
   <Id value="BattleRegeneration"/>
-  <Version value="v2.1.1.25"/>
+  <Version value="v2.2.0.55"/>
   <SingleplayerModule value="true"/>
   <MultiplayerModule value="false"/>
   <Official value="false"/>
@@ -10,6 +10,7 @@
     <DependedModule Id="SandBoxCore"/>
     <DependedModule Id="Sandbox"/>
     <DependedModule Id="StoryMode"/>
+    <DependedModule Id="Bannerlord.MBOptionScreen" />
   </DependedModules>
   <SubModules>
     <SubModule>

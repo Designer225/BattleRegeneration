@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.Library;
@@ -13,12 +14,44 @@ namespace BattleRegen
     /// </summary>
     public abstract class Formula : IComparable<Formula>
     {
-        private static List<Formula> formulas = new List<Formula>();
+        private static List<Formula>? formulas;
 
         /// <summary>
         /// Returns a list of formulas loaded by the mod.
         /// </summary>
-        public static IEnumerable<Formula> Formulas => formulas;
+        public static IEnumerable<Formula> Formulas
+        {
+            get
+            {
+                if (formulas == null)
+                {
+                    formulas = new List<Formula>();
+                    foreach (var type in AccessTools.AllTypes().AsParallel().Where(x => x.IsSubclassOf(typeof(Formula))))
+                    {
+                        try
+                        {
+                            if (!typeof(Formula).IsAssignableFrom(type))
+                                Debug.Print($"[BattleRegen] {type.FullName} is not a Formula subtype");
+                            else if (formulas.Any(x => x.GetType() == type))
+                                Debug.Print($"[BattleRegen] {type.FullName} is already added");
+                            else
+                            {
+                                var formula = (Activator.CreateInstance(type) as Formula)!;
+                                formulas.RemoveAll(x => x.Id == formula.Id);
+                                formulas.Add(formula);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            string error = $"[BattleRegen] Failed to add an instance of {type.FullName} as a formula due to an exception.\n{e}";
+                            Debug.Print(error);
+                            InformationManager.DisplayMessage(new InformationMessage(error));
+                        }
+                    }
+                }
+                return formulas;
+            }
+        }
 
         /// <summary>
         /// The name of the formula.
@@ -62,64 +95,6 @@ namespace BattleRegen
         {
             int comparison = Priority.CompareTo(other.Priority);
             return comparison == 0 ? Id.CompareTo(other.Id) : comparison;
-        }
-
-        /// <summary>
-        /// Adds a formula, given the type parameter. If two formulas with the same <see cref="Id"/> exists, the one being added will replace the other.
-        /// </summary>
-        /// <typeparam name="T">A subtype of <see cref="Formula"/>.</typeparam>
-        /// <returns>Whether the addition is successful.</returns>
-        public static bool AddFormula<T>() where T : Formula
-        {
-            try
-            {
-                if (formulas.Any(x => x is T))
-                    Debug.Print($"[BattleRegen] {typeof(T).FullName} is already added");
-                else
-                {
-                    var formula = Activator.CreateInstance<T>();
-                    formulas.RemoveAll(x => x.Id == formula.Id);
-                    formulas.Add(formula);
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-                string error = $"[BattleRegen] Failed to add an instance of {typeof(T).FullName} as a formula due to an exception.\n{e}";
-                Debug.Print(error);
-                InformationManager.DisplayMessage(new InformationMessage(error));
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Adds a formula, given the type parameter. If two formulas with the same <see cref="Id"/> exists, the one being added will replace the other.
-        /// </summary>
-        /// <param name="type">A subtype of <see cref="Formula"/>.</param>
-        /// <returns>Whether the addition is successful.</returns>
-        public static bool AddFormula(Type type)
-        {
-            try
-            {
-                if (!typeof(Formula).IsAssignableFrom(type))
-                    Debug.Print($"[BattleRegen] {type.FullName} is not a Formula subtype");
-                else if (formulas.Any(x => x.GetType() == type))
-                    Debug.Print($"[BattleRegen] {type.FullName} is already added");
-                else
-                {
-                    var formula = Activator.CreateInstance(type) as Formula;
-                    formulas.RemoveAll(x => x.Id == formula.Id);
-                    formulas.Add(formula);
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-                string error = $"[BattleRegen] Failed to add an instance of {type.FullName} as a formula due to an exception.\n{e}";
-                Debug.Print(error);
-                InformationManager.DisplayMessage(new InformationMessage(error));
-            }
-            return false;
         }
     }
 }
