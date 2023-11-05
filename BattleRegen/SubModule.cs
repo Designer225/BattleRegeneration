@@ -21,10 +21,6 @@ namespace BattleRegen
             base.OnBeforeInitialModuleScreenSetAsRoot();
             new Harmony("d225.battleregen").PatchAll();
 
-            // loads every subtype of Formula and add them
-            foreach (var type in AccessTools.AllTypes().AsParallel().Where(x => typeof(Formula).IsAssignableFrom(x)))
-                Formula.AddFormula(type);
-
             _isLoaded = true;
         }
 

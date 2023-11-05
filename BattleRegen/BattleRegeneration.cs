@@ -115,12 +115,12 @@ namespace BattleRegen
         {
             float xpGain = regenAmount / agent.HealthLimit; // xp gain is also based on all-time health limit
 
-            switch(troopType)
+            switch (troopType)
             {
                 case TroopType.Mount:
                 case TroopType.Animal:
                     float riderXpGain = xpGain * settings.XpGain;
-                    Hero rider = (agent.MountAgent.Character as CharacterObject).HeroObject;
+                    Hero rider = (agent.MountAgent.Character as CharacterObject)!.HeroObject;
                     heroXpGainPairs.Enqueue(new Tuple<Hero, float>(rider, riderXpGain));
 
                     if (settings.VerboseDebug)
@@ -128,26 +128,26 @@ namespace BattleRegen
                     break;
                 default:
                     float selfXpGain = xpGain * settings.XpGain;
-                    Hero hero = (agent.Character as CharacterObject).HeroObject;
+                    Hero hero = (agent.Character as CharacterObject)!.HeroObject;
                     heroXpGainPairs.Enqueue(new Tuple<Hero, float>(hero, selfXpGain));
                     if (settings.VerboseDebug)
                         messages.Enqueue($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
 
                     float cdrXpGain = xpGain * settings.CommanderXpGain;
-                    Hero commander = default;
+                    Hero? commander = default;
                     switch (troopType)
                     {
                         case TroopType.Player:
                         case TroopType.Companion:
                         case TroopType.Subordinate:
                         case TroopType.PlayerTroop:
-                            commander = (Agent.Main.Character as CharacterObject).HeroObject;
+                            commander = (Agent.Main.Character as CharacterObject)!.HeroObject;
                             break;
                         case TroopType.AlliedHero:
                         case TroopType.AlliedTroop:
                         case TroopType.EnemyHero:
                         case TroopType.EnemyTroop:
-                            commander = (agent.Team.GeneralAgent.Character as CharacterObject).HeroObject;
+                            commander = (agent.Team.GeneralAgent.Character as CharacterObject)!.HeroObject;
                             break;
                     }
                     if (commander != default)

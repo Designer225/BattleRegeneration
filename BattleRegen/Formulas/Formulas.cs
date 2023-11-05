@@ -10,7 +10,7 @@ using TaleWorlds.MountAndBlade;
 namespace BattleRegen.Formulas
 {
     // Linear regen formula
-    sealed class LinearFormula : Formula
+    internal sealed class LinearFormula : Formula
     {
         // You must define this property.
         public override string Name => "{=BattleRegen_Linear}Linear";
@@ -30,7 +30,7 @@ namespace BattleRegen.Formulas
     }
 
     // Quadratic regen formula
-    sealed class QuadraticFormula : Formula
+    internal sealed class QuadraticFormula : Formula
     {
         public override string Name => "{=BattleRegen_Quadratic}Quadratic";
 
@@ -72,7 +72,7 @@ namespace BattleRegen.Formulas
     }
 
     // EVE Online regen formula
-    sealed class EveOnlineFormula : Formula
+    internal sealed class EveOnlineFormula : Formula
     {
         public override string Name => "{=BattleRegen_EveOnline}EVE Online";
 
@@ -90,7 +90,7 @@ namespace BattleRegen.Formulas
     
     // Sine regen formula - credit: WyrdOh (https://forums.nexusmods.com/index.php?showtopic=8702373/#entry86794963)
     // Originally written in C#, then rewritten in VB when the mod still used a compiler, then rewritten in C# after the compiler is dispensed with.
-    sealed class SineFormula : Formula
+    internal sealed class SineFormula : Formula
     {
         public override string Name => "{=BattleRegen_Sine}Sine";
 

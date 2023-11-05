@@ -25,10 +25,7 @@ namespace BattleRegen
             timeSinceLastAttack = 0f;
 
             if (settings.Debug)
-            {
-                var team = agent.Monster.FamilyType != HumanFamilyType ? agent.MountAgent?.Team : agent.Team;
                 Debug.Print($"[BattleRegen] agent is classified as {Enum.GetName(typeof(TroopType), GetTroopType())} at the time of creation");
-            }
         }
 
         internal void TickHeal() => timeSinceLastAttack = 0f;
@@ -135,7 +132,7 @@ namespace BattleRegen
             // rewrite
             // for mounts, get rider skills
             // for humans, get unit skills, then commander skills - for now general only, but maybe sergeant later on
-            switch(troopType)
+            switch (troopType)
             {
                 case TroopType.Mount:
                 case TroopType.Animal:
@@ -143,7 +140,7 @@ namespace BattleRegen
                     break;
                 default:
                     modifier += Agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * percentMedBoost;
-                    switch(troopType)
+                    switch (troopType)
                     {
                         case TroopType.Player:
                         case TroopType.Companion:
@@ -179,7 +176,7 @@ namespace BattleRegen
                 if (Agent.IsMount) return TroopType.Mount;
                 else if (Agent.Monster.FamilyType != HumanFamilyType) return TroopType.Animal;
                 else if (Agent.IsPlayerUnit) return TroopType.Player;
-                else if (Agent.IsHero && (Agent.Character as CharacterObject).HeroObject.IsPlayerCompanion)
+                else if (Agent.IsHero && (Agent.Character as CharacterObject)!.HeroObject.IsPlayerCompanion)
                     return TroopType.Companion;
                 else
                 {
@@ -191,7 +188,7 @@ namespace BattleRegen
                     }
                     else if (team.IsPlayerTeam)
                     {
-                        if (team.IsPlayerGeneral || (Agent.Formation.PlayerOwner != default && Agent.Formation.PlayerOwner.IsPlayerUnit))
+                        if (team.IsPlayerGeneral || Agent.Formation.PlayerOwner != default && Agent.Formation.PlayerOwner.IsPlayerUnit)
                         {
                             if (Agent.IsHero) return TroopType.Subordinate;
                             else return TroopType.PlayerTroop;

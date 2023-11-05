@@ -13,7 +13,7 @@ namespace BattleRegen
 {
     static class BattleRegenSettingsUtil
     {
-        private static IBattleRegenSettings instance;
+        private static IBattleRegenSettings? instance;
 
         public static int ExceptionCount { get; internal set; }
 
