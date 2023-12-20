@@ -11,7 +11,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <Version>2.2.0.55</Version>
+    <Version>2.2.0.88</Version>
     <DebugType>full</DebugType>
     <DocumentationFile>..\bin\Win64_Shipping_Client\BattleRegen.xml</DocumentationFile>
     <PackageOutputPath>$(OutputPath)</PackageOutputPath>
@@ -32,6 +32,6 @@
   </Target>
   <ItemGroup>
     <PackageReference Include="Bannerlord.MCM" Version="5.9.1" />
-    <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="1.1.5.21456" />
+    <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="1.2.7.31207" />
   </ItemGroup>
 </Project>

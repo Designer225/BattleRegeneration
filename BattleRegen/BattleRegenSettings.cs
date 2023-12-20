@@ -46,8 +46,8 @@ namespace BattleRegen
                     {
                         try
                         {
-                            using (var stream = ConfigFile.OpenText())
-                                instance = serializer.Deserialize(stream) as BattleRegenDefaultSettings;
+                            using var stream = ConfigFile.OpenText();
+                            instance = serializer.Deserialize(stream) as BattleRegenDefaultSettings;
                         }
                         catch (Exception e)
                         {
