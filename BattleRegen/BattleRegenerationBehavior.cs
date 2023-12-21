@@ -120,8 +120,8 @@ namespace BattleRegen
                     for (; messageCount < messageCap; ++messageCount)
                         if (messages.Count > 0)
                         {
-                            string message = messages.Dequeue();
-                            if (messageCount < infoMessageCap) InformationManager.DisplayMessage(new InformationMessage(messages.Dequeue()));
+                            var message = messages.Dequeue();
+                            if (messageCount < infoMessageCap) InformationManager.DisplayMessage(new InformationMessage(message));
                             Debug.Print(message);
                         }
                 if (xpGains != null)
