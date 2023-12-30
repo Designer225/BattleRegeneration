@@ -23,7 +23,7 @@ namespace BattleRegen
         private readonly Dictionary<Hero, float> _heroXpGainPairs;
         private readonly Dictionary<Agent, int> _agentIndexPairs;
         private BattleRegenAgentData[] _agentData;
-        private readonly Stack<int> _freeList;
+        private Stack<(Agent, bool)> _toAddOrRemove;
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
@@ -33,7 +33,7 @@ namespace BattleRegen
             _heroXpGainPairs = new Dictionary<Hero, float>();
             _agentIndexPairs = new Dictionary<Agent, int>(AnticipatedAgentCount);
             _agentData = new BattleRegenAgentData[AnticipatedAgentCount];
-            _freeList = new Stack<int>();
+            _toAddOrRemove = new Stack<(Agent, bool)>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
             Debug.Print($"[BattleRegeneration] Debug mode on, dumping settings: regen mode: {_settings.RegenModel}, " +
@@ -42,35 +42,6 @@ namespace BattleRegen
                 $"regen in percent HP: player:{_settings.RegenAmount}, subordinate:{_settings.RegenAmountCompanions}, allied heroes:{_settings.RegenAmountAllies}, " +
                 $"party troops:{_settings.RegenAmountPartyTroops}, allied troops:{_settings.RegenAmountAlliedTroops}, enemy heroes:{_settings.RegenAmountEnemies}, " +
                 $"enemy troops:{_settings.RegenAmountEnemyTroops}, animals:{_settings.RegenAmountAnimals}");
-        }
-
-        private void AddAgent(Agent agent)
-        {
-            int index;
-            if (_freeList.Count > 0) index = _freeList.Pop();
-            else
-            {
-                EnsureCapacity();
-                index = _agentIndexPairs.Count;
-            }
-            _agentIndexPairs[agent] = index;
-            _agentData[index] = new BattleRegenAgentData(agent);
-
-            if (_settings.Debug)
-                Debug.Print($"[BattleRegen] agent {agent.Name} registered");
-        }
-
-        private void RemoveAgent(Agent agent)
-        {
-            if (_agentIndexPairs.TryGetValue(agent, out var index))
-            {
-                _agentIndexPairs.Remove(agent);
-                _agentData[index] = default;
-                _freeList.Push(index);
-
-                if (_settings.Debug)
-                    Debug.Print($"[BattleRegen] agent {agent.Name} unregistered");
-            }
         }
 
         private void EnsureCapacity(int add = 1)
@@ -84,15 +55,12 @@ namespace BattleRegen
             }
         }
 
-        public override void OnAgentBuild(Agent agent, Banner banner)
-        {
-            AddAgent(agent);
-        }
+        public override void OnAgentBuild(Agent agent, Banner banner) => _toAddOrRemove.Push((agent, true));
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow blow)
-            => RemoveAgent(affectedAgent);
+            => _toAddOrRemove.Push((affectedAgent, false));
 
-        public override void OnAgentDeleted(Agent affectedAgent) => RemoveAgent(affectedAgent);
+        public override void OnAgentDeleted(Agent affectedAgent) => _toAddOrRemove.Push((affectedAgent, false));
 
         public override void OnRegisterBlow(Agent attacker, Agent victim, GameEntity realHitEntity, Blow b, ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon)
         {
@@ -109,12 +77,19 @@ namespace BattleRegen
 
         public override void OnMissionTick(float dt)
         {
+            while (_toAddOrRemove.Count > 0)
+            {
+                var (agent, addIfTrue) = _toAddOrRemove.Pop();
+                if (addIfTrue) AddAgent(agent);
+                else RemoveAgent(agent);
+            }
+
             var arenaController = Mission.GetMissionBehavior<ArenaPracticeFightMissionController>();
             if (arenaController != default && arenaController.AfterPractice) return;
 
             int messageCount = 0;
             const int infoMessageCap = 10, messageCap = 100;
-            foreach (var (messages, xpGains) in _agentIndexPairs.Values.AsParallel().Select(x => _agentData[x].AttemptRegeneration(dt, _settings)))
+            foreach (var (messages, xpGains) in ParallelEnumerable.Range(0, _agentIndexPairs.Count).Select(x => _agentData[x].AttemptRegeneration(dt, _settings)))
             {
                 if (messages != null)
                     for (; messageCount < messageCap; ++messageCount)
@@ -134,6 +109,42 @@ namespace BattleRegen
                         else _heroXpGainPairs[hero] = xp;
                     }
                 }
+            }
+        }
+
+        private void AddAgent(Agent agent)
+        {
+            EnsureCapacity();
+            int index = _agentIndexPairs.Count;
+            _agentIndexPairs[agent] = index;
+            _agentData[index] = new BattleRegenAgentData(agent);
+
+            if (_settings.Debug)
+                Debug.Print($"[BattleRegen] agent {agent.Name} registered");
+        }
+
+        private void RemoveAgent(Agent agent)
+        {
+            if (_agentIndexPairs.TryGetValue(agent, out var index))
+            {
+                _agentIndexPairs.Remove(agent);
+                ref var dataRef = ref _agentData[index];
+                // since index < Count always, after removal from dictionary index <= Count always.
+                // we do not need to swap if index == Count (since the last item removed is the last added)
+                // otherwise we swap and update accordingly
+                var lastIndex = _agentIndexPairs.Count;
+                if (index < lastIndex)
+                {
+                    // swap with last item
+                    ref var lastDataRef = ref _agentData[lastIndex];
+                    dataRef = lastDataRef;
+                    lastDataRef = default;
+                    _agentIndexPairs[dataRef.Agent] = index;
+                }
+                else dataRef = default;
+
+                if (_settings.Debug)
+                    Debug.Print($"[BattleRegen] agent {agent.Name} unregistered");
             }
         }
 

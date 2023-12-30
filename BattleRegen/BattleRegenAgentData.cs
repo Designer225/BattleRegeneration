@@ -187,36 +187,39 @@ namespace BattleRegen
                 case TroopType.Mount:
                 case TroopType.Animal:
                     float riderXpGain = xpGain * settings.XpGain;
-                    Hero? rider = (agent.MountAgent.Character as CharacterObject)?.HeroObject;
+                    var rider = (agent.MountAgent?.Character as CharacterObject)?.HeroObject;
                     if (rider != null)
                         xpGains.Push((rider, riderXpGain));
 
-                    if (settings.VerboseDebug)
-                        messages.Enqueue($"[BattleRegeneration] rider agent {agent.MountAgent.Name} has received {riderXpGain} xp");
+                    if (settings.VerboseDebug && rider != null)
+                        messages.Enqueue($"[BattleRegeneration] rider agent {rider} has received {riderXpGain} xp");
                     break;
                 default:
                     float selfXpGain = xpGain * settings.XpGain;
-                    Hero? hero = (agent.Character as CharacterObject)?.HeroObject;
+                    var hero = (agent.Character as CharacterObject)?.HeroObject;
                     if (hero != null)
                         xpGains.Push((hero, selfXpGain));
                     if (settings.VerboseDebug)
                         messages.Enqueue($"[BattleRegeneration] agent {agent.Name} has received {selfXpGain} xp");
 
                     float cdrXpGain = xpGain * settings.CommanderXpGain;
-                    Hero? commander = default;
+                    var commander = default(Hero);
                     switch (troopType)
                     {
                         case TroopType.Player:
                         case TroopType.Companion:
                         case TroopType.Subordinate:
                         case TroopType.PlayerTroop:
-                            commander = (Agent.Main.Character as CharacterObject)?.HeroObject;
+                            commander = (Agent.Main?.Character as CharacterObject)?.HeroObject;
+                            commander ??= (Mission.Current?.MainAgent?.Character as CharacterObject)?.HeroObject;
+                            commander ??= (Mission.Current?.PlayerTeam?.ActiveAgents?.Find(x => x.IsPlayerUnit)?.Character as CharacterObject)?.HeroObject;
+                            commander ??= Hero.MainHero;
                             break;
                         case TroopType.AlliedHero:
                         case TroopType.AlliedTroop:
                         case TroopType.EnemyHero:
                         case TroopType.EnemyTroop:
-                            commander = (agent.Team.GeneralAgent.Character as CharacterObject)?.HeroObject;
+                            commander = (agent.Team?.GeneralAgent?.Character as CharacterObject)?.HeroObject;
                             break;
                     }
                     if (commander != default)
