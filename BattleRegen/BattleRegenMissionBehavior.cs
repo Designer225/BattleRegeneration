@@ -17,11 +17,9 @@ namespace BattleRegen
 {
     sealed class BattleRegenMissionBehavior : MissionBehavior
     {
-        private const int AnticipatedAgentCount = 2048;
-
         private readonly IBattleRegenSettings _settings;
         private readonly Dictionary<Hero, float> _heroXpGainPairs;
-        private readonly Dictionary<Agent, BattleRegenAgentComponent> _agentComponents;
+        private readonly HashSet<BattleRegenAgentComponent> _agentComponents;
         private readonly Queue<string> _messages;
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
@@ -30,7 +28,7 @@ namespace BattleRegen
         {
             _settings = BattleRegenSettingsUtil.Instance;
             _heroXpGainPairs = new Dictionary<Hero, float>();
-            _agentComponents = new Dictionary<Agent, BattleRegenAgentComponent>(AnticipatedAgentCount);
+            _agentComponents = new HashSet<BattleRegenAgentComponent>();
             _messages = new Queue<string>();
 
             Debug.Print("[BattleRegeneration] Mission started, data initialized");
@@ -44,17 +42,18 @@ namespace BattleRegen
 
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
-            var behavior = new BattleRegenAgentComponent(agent);
-            agent.AddComponent(behavior);
-            _agentComponents[agent] = behavior;
+            var component = new BattleRegenAgentComponent(agent);
+            agent.AddComponent(component);
+            _agentComponents.Add(component);
         }
 
         private void RemoveAgent(Agent agent)
         {
-            if (_agentComponents.TryGetValue(agent, out var component))
+            var component = agent.GetComponent<BattleRegenAgentComponent>();
+            if (component != null)
             {
+                _agentComponents.Remove(component);
                 agent.RemoveComponent(component);
-                _agentComponents.Remove(agent);
             }
         }
 
@@ -68,8 +67,8 @@ namespace BattleRegen
         {
             var arenaController = Mission.GetMissionBehavior<ArenaPracticeFightMissionController>();
             if (arenaController != default && arenaController.AfterPractice) return;
-            _agentComponents.Values.AsParallel().ForAll(x => x.OnTick(dt));
-            foreach (var component in _agentComponents.Values)
+            _agentComponents.AsParallel().ForAll(x => x.OnTick(dt));
+            foreach (var component in _agentComponents)
                 component.TransferInformation(_heroXpGainPairs, _messages);
             while (_messages.Count > 0)
                 Debug.Print(_messages.Dequeue());
@@ -77,7 +76,8 @@ namespace BattleRegen
 
         public override void OnAgentTeamChanged(Team prevTeam, Team newTeam, Agent agent)
         {
-            if (_agentComponents.TryGetValue(agent, out var component)) component.UpdateAgentType();
+            var component = agent.GetComponent<BattleRegenAgentComponent>();
+            component?.UpdateAgentType();
         }
 
         public override void OnClearScene()

@@ -159,21 +159,21 @@ namespace BattleRegen
                     if (Agent.MountAgent != default) modifier += Agent.MountAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * percentMedBoost;
                     break;
                 default:
-                    modifier += Agent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * percentMedBoost;
+                    modifier += Agent.Character?.GetSkillValue(DefaultSkills.Medicine) / 50f * percentMedBoost ?? 0f;
                     switch (AgentType)
                     {
                         case AgentType.Player:
                         case AgentType.Companion:
                         case AgentType.Subordinate:
                         case AgentType.PlayerTroop:
-                            modifier += Agent.Main.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * _settings.CommanderMedicineBoost / 100f;
+                            modifier += Agent.Main?.Character?.GetSkillValue(DefaultSkills.Medicine) / 50f * _settings.CommanderMedicineBoost / 100f ?? 0f;
                             break;
                         case AgentType.AlliedHero:
                         case AgentType.AlliedTroop:
                         case AgentType.EnemyHero:
                         case AgentType.EnemyTroop:
                             if (Agent.Team?.GeneralAgent == null) break;
-                            modifier += Agent.Team.GeneralAgent.Character.GetSkillValue(DefaultSkills.Medicine) / 50f * _settings.CommanderMedicineBoost / 100f;
+                            modifier += Agent.Team?.GeneralAgent?.Character?.GetSkillValue(DefaultSkills.Medicine) / 50f * _settings.CommanderMedicineBoost / 100f ?? 0f;
                             break;
                     }
                     break;
@@ -298,6 +298,8 @@ namespace BattleRegen
             if (_settings.Debug)
                 Debug.Print($"[BattleRegen] Agent {Agent.Name} {Agent.GetHashCode()} is now AgentType {AgentType}");
         }
+
+        public override int GetHashCode() => Agent.GetHashCode();
     }
 
     internal enum AgentType
